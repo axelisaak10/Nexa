@@ -9,7 +9,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'All fields are required' }, { status: 400 });
     }
 
-    const result = await createMensajeContacto({ nombre, email, mensaje });
+    const result = await createMensajeContacto(nombre, email, mensaje);
     return NextResponse.json(result);
   } catch (error) {
     console.error('Contact API error:', error);

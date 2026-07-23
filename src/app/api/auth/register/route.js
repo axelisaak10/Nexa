@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { registerUsuario } from '@/lib/mockData';
+import { sign } from '@/lib/jwt';
 
 export async function POST(request) {
   try {
@@ -10,9 +11,19 @@ export async function POST(request) {
     }
 
     const result = await registerUsuario(nombre, email, password);
+    if (result.success && result.user) {
+      const token = sign({
+        id_usuario: result.user.id_usuario,
+        nombre: result.user.nombre,
+        email: result.user.email,
+        id_rol: result.user.id_rol
+      });
+      return NextResponse.json({ success: true, user: result.user, token });
+    }
     return NextResponse.json(result);
   } catch (error) {
     console.error('Register API error:', error);
     return NextResponse.json({ success: false, error: 'Registration failed' }, { status: 500 });
   }
 }
+

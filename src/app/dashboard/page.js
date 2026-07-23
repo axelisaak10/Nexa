@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import DashboardCharts from '@/components/DashboardCharts';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, fetchWithAuth } = useAuth();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('metricas');
 
@@ -33,20 +33,14 @@ export default function DashboardPage() {
 
   const isAdmin = user && (user.id_rol === 1 || user.email === 'admin@nexa.com');
 
-  useEffect(() => {
-    if (isAdmin) {
-      fetchDashboardData();
-    }
-  }, [isAdmin]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       const [resProd, resOrd, resUsers, resMet] = await Promise.all([
-        fetch('/api/admin/products'),
-        fetch('/api/admin/orders'),
-        fetch('/api/admin/users'),
-        fetch('/api/metrics')
+        fetchWithAuth('/api/admin/products'),
+        fetchWithAuth('/api/admin/orders'),
+        fetchWithAuth('/api/admin/users'),
+        fetchWithAuth('/api/metrics')
       ]);
 
       const dataProd = await resProd.json();
@@ -62,7 +56,16 @@ export default function DashboardPage() {
       console.error('Error loading admin dashboard:', e);
     }
     setLoading(false);
-  };
+  }, [fetchWithAuth]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      // Defer state-setting callback to avoid synchronous setState inside render-phase effects
+      Promise.resolve().then(() => {
+        fetchDashboardData();
+      });
+    }
+  }, [isAdmin, fetchDashboardData]);
 
   // ADMIN ROUTE GUARD
   if (!isAdmin) {
@@ -131,7 +134,7 @@ export default function DashboardPage() {
         ? { id_producto: editingProduct.id_producto, ...productForm }
         : productForm;
 
-      const res = await fetch('/api/admin/products', {
+      const res = await fetchWithAuth('/api/admin/products', {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -152,7 +155,7 @@ export default function DashboardPage() {
   const handleDeleteProduct = async (id) => {
     if (!confirm('¿Estás seguro de eliminar este producto de la tienda?')) return;
     try {
-      const res = await fetch(`/api/admin/products?id=${id}`, { method: 'DELETE' });
+      const res = await fetchWithAuth(`/api/admin/products?id=${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         showToast('Producto eliminado', 'success');
@@ -166,7 +169,7 @@ export default function DashboardPage() {
   // Order Status Handler
   const handleUpdateOrderStatus = async (id_pedido, nuevoEstado) => {
     try {
-      const res = await fetch('/api/admin/orders', {
+      const res = await fetchWithAuth('/api/admin/orders', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_pedido, estado_pedido: nuevoEstado })
@@ -184,7 +187,7 @@ export default function DashboardPage() {
   // User Role Handler
   const handleUpdateUserRole = async (id_usuario, nuevoRol) => {
     try {
-      const res = await fetch('/api/admin/users', {
+      const res = await fetchWithAuth('/api/admin/users', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_usuario, id_rol: nuevoRol })

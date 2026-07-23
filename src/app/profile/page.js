@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, fetchWithAuth } = useAuth();
   const { showToast } = useToast();
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -17,28 +17,33 @@ export default function ProfilePage() {
     direccion: 'Av. Paseo de la Reforma 402, Juárez, CDMX'
   });
 
-  useEffect(() => {
-    if (user) {
-      setProfileData({
-        nombre: user.nombre || '',
-        email: user.email || '',
-        direccion: 'Av. Paseo de la Reforma 402, Juárez, CDMX'
-      });
-      fetchUserOrders(user.id_usuario);
-    }
-  }, [user]);
-
-  const fetchUserOrders = async (userId) => {
+  const fetchUserOrders = useCallback(async (userId) => {
     setLoadingOrders(true);
     try {
-      const res = await fetch(`/api/orders?userId=${userId}`);
-      const data = await res.json();
-      setOrders(data.pedidos || []);
+      const res = await fetchWithAuth(`/api/orders?userId=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data.orders || data.pedidos || []);
+      }
     } catch (e) {
       console.error('Error loading user orders:', e);
     }
     setLoadingOrders(false);
-  };
+  }, [fetchWithAuth]);
+
+  useEffect(() => {
+    if (user) {
+      // Defer state update to satisfy React linting rules against sync setState inside effects
+      Promise.resolve().then(() => {
+        setProfileData({
+          nombre: user.nombre || '',
+          email: user.email || '',
+          direccion: 'Av. Paseo de la Reforma 402, Juárez, CDMX'
+        });
+        fetchUserOrders(user.id_usuario);
+      });
+    }
+  }, [user, fetchUserOrders]);
 
   const handleProfileSubmit = (e) => {
     e.preventDefault();

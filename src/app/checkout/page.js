@@ -9,7 +9,7 @@ import { useToast } from '@/context/ToastContext';
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, fetchWithAuth } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/orders', {
+      const res = await fetchWithAuth('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

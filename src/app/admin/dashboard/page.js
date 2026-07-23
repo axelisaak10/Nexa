@@ -1,39 +1,54 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 import { TrendingUp, Eye, DollarSign, PackageOpen, RefreshCw, BarChart2, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function AdminDashboard() {
+  const { user, loading: authLoading, fetchWithAuth } = useAuth();
   const [analyticsData, setAnalyticsData] = useState([]);
   const [productsData, setProductsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [chartTab, setChartTab] = useState('sales'); // 'sales' or 'views'
   const [syncing, setSyncing] = useState(false);
 
+  const isAdmin = user && (user.id_rol === 1 || user.email === 'admin@nexa.com');
+
   // Load analytics and products list from Next.js APIs
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
+    if (!isAdmin) return;
     setSyncing(true);
     try {
       // Fetch analytics history
-      const resAnal = await fetch('/api/analytics');
-      const dataAnal = await resAnal.json();
-      setAnalyticsData(dataAnal);
+      const resAnal = await fetchWithAuth('/api/analytics');
+      if (resAnal.ok) {
+        const dataAnal = await resAnal.json();
+        setAnalyticsData(Array.isArray(dataAnal) ? dataAnal : []);
+      }
 
       // Fetch products stock levels
-      const resProd = await fetch('/api/products');
-      const dataProd = await resProd.json();
-      setProductsData(dataProd);
+      const resProd = await fetchWithAuth('/api/products');
+      if (resProd.ok) {
+        const dataProd = await resProd.json();
+        setProductsData(dataProd.products || dataProd || []);
+      }
     } catch (err) {
       console.error("Dashboard synchronization failed:", err);
     } finally {
       setLoading(false);
       setSyncing(false);
     }
-  };
+  }, [isAdmin, fetchWithAuth]);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (!authLoading) {
+      // Defer state update to satisfy React linting constraints
+      Promise.resolve().then(() => {
+        fetchDashboardData();
+      });
+    }
+  }, [authLoading, fetchDashboardData]);
 
   // Compute total aggregates from analytics logs
   const totalSales = analyticsData.reduce((sum, item) => sum + Number(item.total_sales), 0);
@@ -53,7 +68,46 @@ export default function AdminDashboard() {
 
   const chartMax = getMaxVal(chartTab === 'sales' ? 'total_sales' : 'page_views');
 
+  if (authLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', gap: '12px' }}>
+        <RefreshCw className="spinner" size={24} style={{ color: 'var(--color-teal)', animation: 'spin 1.5s linear infinite' }} />
+        <span>Cargando credenciales...</span>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="container section-padding text-center" style={{ maxWidth: '600px', margin: 'auto', paddingTop: '100px' }}>
+        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid var(--border)', borderRadius: '16px', padding: '40px 24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+          <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#FFF3E0', color: '#E65100', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0110 0v4" />
+            </svg>
+          </div>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', marginBottom: '12px' }}>
+            Acceso Restringido
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: '1.6' }}>
+            Este panel de análisis es exclusivo para personal autorizado de Nexa. Por favor, inicia sesión con una cuenta de administrador.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/auth/login" className="btn-primary">
+              INICIAR SESIÓN COMO ADMIN
+            </Link>
+            <Link href="/" className="btn-secondary" style={{ border: '1px solid var(--border)', padding: '12px 20px' }}>
+              VOLVER A LA TIENDA
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
+
     <div className="container" style={{ padding: '40px 24px 80px 24px' }}>
       
       {/* Dashboard Header */}

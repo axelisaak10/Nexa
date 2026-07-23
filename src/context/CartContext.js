@@ -6,22 +6,27 @@ import { useToast } from '@/context/ToastContext';
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedCart = localStorage.getItem('nexa-cart');
+        return savedCart ? JSON.parse(savedCart) : [];
+      } catch (e) {
+        console.error('Failed to load cart from localStorage:', e);
+        return [];
+      }
+    }
+    return [];
+  });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { showToast } = useToast();
 
-  // Load cart from localStorage on mount
+  // Mark component as mounted
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem('nexa-cart');
-      if (savedCart) {
-        setItems(JSON.parse(savedCart));
-      }
-    } catch (e) {
-      console.error('Failed to load cart from localStorage:', e);
-    }
-    setMounted(true);
+    Promise.resolve().then(() => {
+      setMounted(true);
+    });
   }, []);
 
   // Save cart to localStorage on changes

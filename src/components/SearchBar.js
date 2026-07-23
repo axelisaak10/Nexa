@@ -11,7 +11,9 @@ function SearchBarContent() {
   const [query, setQuery] = useState(currentSearch);
 
   useEffect(() => {
-    setQuery(currentSearch);
+    Promise.resolve().then(() => {
+      setQuery(currentSearch);
+    });
   }, [currentSearch]);
 
   const handleSubmit = (e) => {

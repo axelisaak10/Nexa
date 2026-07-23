@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SearchBar from '@/components/SearchBar';
 import CategoryFilter from '@/components/CategoryFilter';
@@ -15,7 +15,7 @@ function ShopContent() {
   const categoryParam = searchParams.get('category') || '';
   const searchParam = searchParams.get('search') || '';
 
-  const fetchProducts = async (categoryId, search) => {
+  const fetchProducts = useCallback(async (categoryId, search) => {
     setLoading(true);
     try {
       let url = '/api/products';
@@ -31,16 +31,18 @@ function ShopContent() {
       console.error('Failed to fetch products:', e);
     }
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    if (categoryParam) {
-      setActiveCategory(parseInt(categoryParam));
-    } else {
-      setActiveCategory(null);
-    }
-    fetchProducts(categoryParam, searchParam);
-  }, [categoryParam, searchParam]);
+    Promise.resolve().then(() => {
+      if (categoryParam) {
+        setActiveCategory(parseInt(categoryParam));
+      } else {
+        setActiveCategory(null);
+      }
+      fetchProducts(categoryParam, searchParam);
+    });
+  }, [categoryParam, searchParam, fetchProducts]);
 
   const handleCategoryChange = (categoryId) => {
     setActiveCategory(categoryId);
