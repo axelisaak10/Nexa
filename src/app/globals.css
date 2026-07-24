@@ -2367,3 +2367,79 @@ button {
   }
 }
 
+/* ═══════════════════════════════════════════════
+   SMARTWATCH QR LOGIN — auth/login page styles
+═══════════════════════════════════════════════ */
+
+.watch-login-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.watch-login-toggle:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background-color: rgba(200, 90, 42, 0.04);
+}
+
+.watch-form {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.watch-instructions {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.watch-instructions strong {
+  color: var(--text-primary);
+}
+
+.watch-code-input {
+  font-family: var(--font-mono);
+  font-size: 1.1rem !important;
+  letter-spacing: 6px;
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.watch-submit-btn {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
+  border: 1px solid var(--accent-primary) !important;
+  color: var(--accent-primary) !important;
+}
+
+.watch-submit-btn:hover:not(:disabled) {
+  background: var(--accent-primary) !important;
+  color: #fff !important;
+}
+
+

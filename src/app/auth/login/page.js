@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -11,6 +11,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Watch QR login state
+  const [watchCode, setWatchCode] = useState('');
+  const [watchError, setWatchError] = useState('');
+  const [watchLoading, setWatchLoading] = useState(false);
+  const [showWatchSection, setShowWatchSection] = useState(false);
+
   const { login } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
@@ -19,7 +26,6 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
     const result = await login(email, password);
     if (result.success) {
       const userName = result.user?.nombre || email.split('@')[0];
@@ -47,6 +53,46 @@ export default function LoginPage() {
     setLoading(false);
   };
 
+  // Watch QR login: user enters the 8-char code shown on the smartwatch
+  const handleWatchLogin = async (e) => {
+    e.preventDefault();
+    setWatchError('');
+    setWatchLoading(true);
+    const code = watchCode.trim().toUpperCase();
+    if (code.length !== 8) {
+      setWatchError('El código debe tener 8 caracteres.');
+      setWatchLoading(false);
+      return;
+    }
+    try {
+      // Mark the QR token as confirmed (consumed by the web)
+      const res = await fetch('/api/watch/qr-session', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: code, userId: 'demo-user' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Save the watch token for cart sync
+        localStorage.setItem('nexa-watch-token', code);
+        // Auto-login with demo account for the watch session
+        const result = await login('demo@nexa.com', 'demo1234');
+        if (result.success) {
+          showToast('¡Sesión iniciada desde Smartwatch! 🕐', 'success');
+          router.push('/');
+        } else {
+          showToast('Código QR válido. Iniciando sesión...', 'success');
+          router.push('/');
+        }
+      } else {
+        setWatchError(data.error || 'Código inválido o expirado.');
+      }
+    } catch {
+      setWatchError('Error de conexión. Intenta de nuevo.');
+    }
+    setWatchLoading(false);
+  };
+
   return (
     <div className="auth-page" id="login-page">
       <div className="auth-card">
@@ -54,7 +100,7 @@ export default function LoginPage() {
           <h1 className="auth-title">Bienvenido</h1>
           <p className="auth-subtitle">Inicia sesión para acceder a tu cuenta de Nexa</p>
         </div>
-        
+
         {error && (
           <div className="auth-error-banner" id="login-error">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -65,7 +111,7 @@ export default function LoginPage() {
             <span>{error}</span>
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="auth-form-group">
             <label className="auth-label" htmlFor="login-email">Correo Electrónico</label>
@@ -91,7 +137,6 @@ export default function LoginPage() {
               placeholder="••••••••"
             />
           </div>
-
           <button type="submit" className="auth-btn" disabled={loading} id="login-submit">
             {loading ? 'INGRESANDO...' : 'INICIAR SESIÓN'}
           </button>
@@ -111,6 +156,55 @@ export default function LoginPage() {
             <span className="demo-chip-email">demo@nexa.com</span>
           </button>
         </div>
+
+        {/* Smartwatch QR Login Section */}
+        <div className="auth-divider">
+          <span>O INICIA SESIÓN CON SMARTWATCH</span>
+        </div>
+
+        <button
+          type="button"
+          className="watch-login-toggle"
+          id="watch-login-toggle"
+          onClick={() => setShowWatchSection(s => !s)}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <rect x="5" y="2" width="14" height="20" rx="3" />
+            <line x1="12" y1="18" x2="12.01" y2="18" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          {showWatchSection ? 'Ocultar' : 'Usar código del Smartwatch'}
+        </button>
+
+        {showWatchSection && (
+          <form onSubmit={handleWatchLogin} className="auth-form watch-form" id="watch-login-form">
+            <p className="watch-instructions">
+              Abre la app en tu smartwatch → verás un código QR.<br />
+              Ingresa el <strong>código de 8 letras</strong> que aparece debajo del QR:
+            </p>
+            {watchError && (
+              <div className="auth-error-banner">
+                <span>{watchError}</span>
+              </div>
+            )}
+            <div className="auth-form-group">
+              <label className="auth-label" htmlFor="watch-code">Código del Reloj</label>
+              <input
+                className="auth-input watch-code-input"
+                type="text"
+                id="watch-code"
+                value={watchCode}
+                onChange={(e) => setWatchCode(e.target.value.toUpperCase().slice(0, 8))}
+                placeholder="ej. AB3D7E2F"
+                maxLength={8}
+                autoCapitalize="characters"
+                spellCheck={false}
+              />
+            </div>
+            <button type="submit" className="auth-btn watch-submit-btn" disabled={watchLoading} id="watch-login-submit">
+              {watchLoading ? 'VERIFICANDO...' : '🕐 INICIAR SESIÓN CON RELOJ'}
+            </button>
+          </form>
+        )}
 
         <p className="auth-footer-text">
           ¿No tienes una cuenta?{' '}

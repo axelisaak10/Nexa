@@ -2,10 +2,12 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DiscountPopup from "@/components/DiscountPopup";
 import PwaRegister from "@/components/PwaRegister";
+import WatchCartSync from "@/components/WatchCartSync";
 
 export const metadata = {
   title: "Nexa — Objetos que ganan su lugar",
@@ -29,15 +31,18 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <ToastProvider>
             <CartProvider>
-              <PwaRegister />
-              <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                <Header />
-                <main style={{ flexGrow: 1, paddingTop: '60px' }}>
-                  {children}
-                </main>
-                <Footer />
-                <DiscountPopup />
-              </div>
+              <FavoritesProvider>
+                <PwaRegister />
+                <WatchCartSync />
+                <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                  <Header />
+                  <main style={{ flexGrow: 1, paddingTop: '60px' }}>
+                    {children}
+                  </main>
+                  <Footer />
+                  <DiscountPopup />
+                </div>
+              </FavoritesProvider>
             </CartProvider>
           </ToastProvider>
         </AuthProvider>
