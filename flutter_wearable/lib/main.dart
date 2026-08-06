@@ -4,6 +4,9 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:qr_flutter/qr_flutter.dart';
 
+// Configuración Global de la API
+const String baseUrl = 'https://nexa-nine-navy.vercel.app';
+
 void main() {
   runApp(const NexaWearApp());
 }
@@ -210,7 +213,12 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
   Timer? _expireTimer;
   int _secondsLeft = 600;
 
-  static const String _baseUrl = 'https://nexa-nine-navy.vercel.app';
+  void _stopTimers() {
+    _pollTimer?.cancel();
+    _expireTimer?.cancel();
+    _pollTimer = null;
+    _expireTimer = null;
+  }
 
   @override
   void initState() {
@@ -220,23 +228,33 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
 
   @override
   void dispose() {
-    _pollTimer?.cancel();
-    _expireTimer?.cancel();
+    _stopTimers();
     super.dispose();
   }
 
   Future<void> _createSession() async {
+    _stopTimers();
     try {
       final res = await http.post(
-        Uri.parse('$_baseUrl/api/watch/qr-session'),
+        Uri.parse('$baseUrl/api/watch/qr-session'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 5));
       if (res.statusCode == 200) {
         final data = json.decode(res.body);
+        final rawExpires = data['expiresInSeconds'];
+        int expires = 600;
+        if (rawExpires is int) {
+          expires = rawExpires;
+        } else if (rawExpires is String) {
+          expires = int.tryParse(rawExpires) ?? 600;
+        }
+
+        debugPrint('NEXA QR: Nueva sesión. Expira en: $expires s. Token: ${data['token']}');
+
         setState(() {
           _token = data['token'];
           _status = 'pending';
-          _secondsLeft = data['expiresInSeconds'] as int? ?? 600;
+          _secondsLeft = expires;
         });
         _startPolling();
         _startCountdown();
@@ -252,20 +270,39 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
 
   void _startPolling() {
     _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
-      if (_token == null) return;
+      if (_token == null || !mounted) return;
       try {
         final res = await http.get(
-          Uri.parse('$_baseUrl/api/watch/qr-session?token=$_token'),
+          Uri.parse('$baseUrl/api/watch/qr-session?token=$_token'),
         ).timeout(const Duration(seconds: 3));
+        
+        if (!mounted) return;
+
         if (res.statusCode == 200) {
           _failedPolls = 0;
           final data = json.decode(res.body);
           final newStatus = data['status'] as String? ?? 'pending';
+          
+          // Sincronizar tiempo si el servidor lo envía
+          final sTime = data['expiresInSeconds'];
+          if (sTime != null) {
+            final sInt = sTime is int ? sTime : int.tryParse(sTime.toString());
+            if (sInt != null) {
+              setState(() => _secondsLeft = sInt);
+            }
+          }
+
           if (newStatus != _status) {
+            // Protección contra falsos positivos de expiración (si el reloj local aun tiene mucho tiempo)
+            if (newStatus == 'expired' && _secondsLeft > 580) {
+              debugPrint('NEXA QR: Ignorando expiración prematura (posible error de BD)');
+              return;
+            }
+
+            debugPrint('NEXA QR: Cambio de estado -> $newStatus');
             setState(() => _status = newStatus);
             if (newStatus == 'confirmed') {
-              _pollTimer?.cancel();
-              _expireTimer?.cancel();
+              _stopTimers();
               await Future.delayed(const Duration(seconds: 1));
               if (mounted) {
                 Navigator.of(context).pushReplacement(
@@ -275,18 +312,18 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
                 );
               }
             } else if (newStatus == 'expired') {
-              _pollTimer?.cancel();
-              _expireTimer?.cancel();
+              _stopTimers();
             }
           }
         } else {
           _failedPolls++;
+          if (_failedPolls > 10) setState(() => _status = 'error');
         }
-      } catch (_) {
-        _failedPolls++;
-        // Solo si falla 5 veces consecutivas (10 segundos sin red) marcamos error
-        if (_failedPolls > 5 && _status == 'pending') {
-          // Mantener en pending o reintentar sin romper la vista
+      } catch (e) {
+        if (mounted) {
+          _failedPolls++;
+          debugPrint('NEXA QR Error Polling: $e');
+          if (_failedPolls > 10) setState(() => _status = 'error');
         }
       }
     });
@@ -294,11 +331,11 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
 
   void _startCountdown() {
     _expireTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
       setState(() {
         _secondsLeft--;
         if (_secondsLeft <= 0) {
-          _expireTimer?.cancel();
-          _pollTimer?.cancel();
+          _stopTimers();
           _status = 'expired';
         }
       });
@@ -367,7 +404,7 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
             const SizedBox(height: 8),
             GestureDetector(
               onTap: () {
-                setState(() { _token = null; _status = 'loading'; _secondsLeft = 180; });
+                setState(() { _token = null; _status = 'loading'; });
                 _createSession();
               },
               child: Container(
@@ -421,7 +458,7 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: QrImageView(
-                  data: 'https://nexa-nine-navy.vercel.app/auth/watch?token=${_token!}',
+                  data: '$baseUrl/auth/watch?token=${_token!}',
                   version: QrVersions.auto,
                   size: 80,
                   backgroundColor: Colors.white,
@@ -491,7 +528,6 @@ class _WatchHomeScreenState extends State<WatchHomeScreen> {
   dynamic _pendingItem;
   bool _pendingIsFavorite = false; // true = action is favorite, false = cart
 
-  static const String _baseUrl = 'http://10.0.2.2:3000';
   static const String _correctPurchasePin = '1234';
 
   @override
@@ -503,7 +539,7 @@ class _WatchHomeScreenState extends State<WatchHomeScreen> {
   Future<void> _fetchOffers() async {
     try {
       final res = await http.get(
-        Uri.parse('$_baseUrl/api/products'),
+        Uri.parse('$baseUrl/api/products'),
       ).timeout(const Duration(seconds: 4));
       if (res.statusCode == 200) {
         final data = json.decode(res.body);
@@ -572,7 +608,7 @@ class _WatchHomeScreenState extends State<WatchHomeScreen> {
     _toast('¡Agregado al carrito!');
     try {
       await http.post(
-        Uri.parse('$_baseUrl/api/watch/cart'),
+        Uri.parse('$baseUrl/api/watch/cart'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'token': widget.watchToken,
@@ -593,7 +629,7 @@ class _WatchHomeScreenState extends State<WatchHomeScreen> {
     _toast('¡Guardado en favoritos! ❤️');
     try {
       await http.post(
-        Uri.parse('$_baseUrl/api/watch/favorites'),
+        Uri.parse('$baseUrl/api/watch/favorites'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'token': widget.watchToken,

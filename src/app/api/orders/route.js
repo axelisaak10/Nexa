@@ -26,7 +26,7 @@ export async function POST(request) {
     const session = getSession(request);
     const body = await request.json();
     
-    const { id_usuario, total, items, direccion } = body;
+    const { id_usuario, total, items, direccion, metodo_pago } = body;
     
     if (!total || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ success: false, error: 'Invalid order data' }, { status: 400 });
@@ -40,7 +40,7 @@ export async function POST(request) {
     const orderData = {
       id_usuario: session ? session.id_usuario : (id_usuario || null),
       total,
-      metodo_pago: 'Tarjeta de crédito',
+      metodo_pago: metodo_pago || 'Tarjeta de crédito',
       direccion_envio,
       fecha_pedido: new Date().toISOString(),
       estado_pedido: 'Pendiente'

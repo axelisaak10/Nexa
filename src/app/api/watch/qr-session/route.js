@@ -12,8 +12,7 @@ const supabase = supabaseUrl && supabaseKey
   ? createClient(supabaseUrl, supabaseKey)
   : null;
 
-// ─── In-memory fallback for local dev (no Supabase configured) ───────────────
-const localSessions = new Map();
+// ─── In-memory fallback DISABLED (Doesn't work in Vercel) ───────────────
 
 function generateToken() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -44,11 +43,10 @@ export async function POST() {
 
     if (error) {
       console.error('Supabase QR session insert error:', error);
-      // Fallback to memory
-      localSessions.set(token, { status: 'pending', userId: null, createdAt: Date.now() });
+      return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
     }
   } else {
-    localSessions.set(token, { status: 'pending', userId: null, createdAt: Date.now() });
+    return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
   }
 
   return NextResponse.json({ token, expiresInSeconds: 600 });
@@ -69,23 +67,16 @@ export async function GET(request) {
 
     if (error || !data) return NextResponse.json({ status: 'expired' });
 
-    const ageMs = Math.abs(Date.now() - new Date(data.created_at).getTime());
+    const ageMs = Date.now() - new Date(data.created_at).getTime();
     if (ageMs > TTL_MS) {
       await supabase.from('qr_sessions').delete().eq('token', token);
-      return NextResponse.json({ status: 'expired' });
+      return NextResponse.json({ status: 'expired', reason: 'TTL_EXPIRED' });
     }
 
-    return NextResponse.json({ status: data.status, userId: data.user_id });
+    return NextResponse.json({ status: data.status, userId: data.user_id, expiresInSeconds: Math.max(0, Math.floor((TTL_MS - ageMs) / 1000)) });
   }
 
-  // Local memory fallback
-  const session = localSessions.get(token);
-  if (!session) return NextResponse.json({ status: 'expired' });
-  if (Date.now() - session.createdAt > TTL_MS) {
-    localSessions.delete(token);
-    return NextResponse.json({ status: 'expired' });
-  }
-  return NextResponse.json({ status: session.status, userId: session.userId });
+  return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
 }
 
 // ─── PUT: web confirms the QR token ──────────────────────────────────────────
