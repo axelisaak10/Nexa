@@ -39,22 +39,6 @@ export default function LoginPage() {
     setLoading(false);
   };
 
-  const handleDemoLogin = async (demoEmail) => {
-    setEmail(demoEmail);
-    setLoading(true);
-    const result = await login(demoEmail, 'demo1234');
-    if (result.success) {
-      const userName = result.user?.nombre || demoEmail.split('@')[0];
-      showToast(`¡Bienvenido de nuevo, ${userName}!`, 'success');
-      router.push('/');
-    } else {
-      setError(result.error);
-    }
-    setLoading(false);
-  };
-  // eslint-disable-next-line no-unused-vars
-  void handleDemoLogin;
-
   // Watch QR login: user enters the 8-char code shown on the smartwatch
   const handleWatchLogin = async (e) => {
     e.preventDefault();

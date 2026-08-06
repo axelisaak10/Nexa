@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -42,8 +42,11 @@ function WatchPairingInner() {
   };
 
   useEffect(() => {
-    if (!token) { setStatus('expired'); return; }
     const timer = setTimeout(() => {
+      if (!token) {
+        setStatus('expired');
+        return;
+      }
       if (user) {
         setStatus('confirming');
         confirmToken(user.id_usuario);
