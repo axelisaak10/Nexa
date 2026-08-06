@@ -110,7 +110,7 @@ export async function PUT(request) {
     }
 
     if (data.status === 'confirmed') {
-      return NextResponse.json({ success: false, error: 'Token already used' });
+      return NextResponse.json({ success: true, userId: data.user_id || userId || 'guest', alreadyConfirmed: true });
     }
 
     const { error: updateError } = await supabase
@@ -134,7 +134,7 @@ export async function PUT(request) {
     return NextResponse.json({ success: false, error: 'Token expired' });
   }
   if (session.status === 'confirmed') {
-    return NextResponse.json({ success: false, error: 'Token already used' });
+    return NextResponse.json({ success: true, userId: session.userId || userId || 'guest', alreadyConfirmed: true });
   }
   session.status = 'confirmed';
   session.userId = userId || 'guest';
