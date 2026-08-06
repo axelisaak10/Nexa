@@ -24,7 +24,7 @@ function generateToken() {
   return token;
 }
 
-const TTL_MS = 3 * 60 * 1000; // 3 minutes
+const TTL_MS = 10 * 60 * 1000; // 10 minutos
 
 // ─── POST: create new QR session (called by smartwatch) ──────────────────────
 export async function POST() {
@@ -32,11 +32,11 @@ export async function POST() {
   const createdAt = new Date().toISOString();
 
   if (supabase) {
-    // Delete expired sessions older than 10 minutes first
+    // Delete expired sessions older than 20 minutes first
     await supabase
       .from('qr_sessions')
       .delete()
-      .lt('created_at', new Date(Date.now() - 10 * 60 * 1000).toISOString());
+      .lt('created_at', new Date(Date.now() - 20 * 60 * 1000).toISOString());
 
     const { error } = await supabase
       .from('qr_sessions')
@@ -51,7 +51,7 @@ export async function POST() {
     localSessions.set(token, { status: 'pending', userId: null, createdAt: Date.now() });
   }
 
-  return NextResponse.json({ token, expiresInSeconds: 180 });
+  return NextResponse.json({ token, expiresInSeconds: 600 });
 }
 
 // ─── GET: check session status (polled by smartwatch) ────────────────────────
@@ -69,7 +69,7 @@ export async function GET(request) {
 
     if (error || !data) return NextResponse.json({ status: 'expired' });
 
-    const ageMs = Date.now() - new Date(data.created_at).getTime();
+    const ageMs = Math.abs(Date.now() - new Date(data.created_at).getTime());
     if (ageMs > TTL_MS) {
       await supabase.from('qr_sessions').delete().eq('token', token);
       return NextResponse.json({ status: 'expired' });
@@ -103,7 +103,7 @@ export async function PUT(request) {
 
     if (error || !data) return NextResponse.json({ success: false, error: 'Token expired or invalid' });
 
-    const ageMs = Date.now() - new Date(data.created_at).getTime();
+    const ageMs = Math.abs(Date.now() - new Date(data.created_at).getTime());
     if (ageMs > TTL_MS) {
       await supabase.from('qr_sessions').delete().eq('token', token);
       return NextResponse.json({ success: false, error: 'Token expired' });
