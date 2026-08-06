@@ -16,10 +16,10 @@ export default function CartPage() {
             <line x1="3" y1="6" x2="21" y2="6" />
             <path d="M16 10a4 4 0 01-8 0" />
           </svg>
-          <h1 className="cart-empty-title">Your cart is empty</h1>
-          <p className="cart-empty-subtitle">Discover our curated collection of objects.</p>
+          <h1 className="cart-empty-title">Tu carrito está vacío</h1>
+          <p className="cart-empty-subtitle">Descubre nuestra colección curada de objetos y piezas exclusivas.</p>
           <Link href="/shop" className="btn-primary">
-            BROWSE COLLECTION
+            VER COLECCIÓN COMPLETA
           </Link>
         </div>
       </div>
@@ -28,13 +28,13 @@ export default function CartPage() {
 
   return (
     <div className="container section-padding">
-      <h1 className="page-title">Shopping Cart</h1>
+      <h1 className="page-title text-center">Carrito de Compras</h1>
       <div className="cart-page" id="cart-page">
         <div className="cart-page-items">
           <div className="cart-page-header-row">
-            <span>Product</span>
-            <span>Price</span>
-            <span>Quantity</span>
+            <span>Producto</span>
+            <span>Precio</span>
+            <span>Cantidad</span>
             <span>Total</span>
             <span></span>
           </div>
@@ -50,11 +50,12 @@ export default function CartPage() {
                 />
                 <span className="cart-page-item-name">{item.nombre}</span>
               </div>
-              <span className="cart-page-item-price">${item.precio}</span>
+              <span className="cart-page-item-price">${Number(item.precio).toFixed(2)}</span>
               <div className="cart-page-item-quantity">
                 <button
                   className="qty-btn"
                   onClick={() => updateQuantity(item.id_producto, item.cantidad - 1)}
+                  aria-label="Disminuir cantidad"
                 >
                   −
                 </button>
@@ -62,6 +63,7 @@ export default function CartPage() {
                 <button
                   className="qty-btn"
                   onClick={() => updateQuantity(item.id_producto, item.cantidad + 1)}
+                  aria-label="Aumentar cantidad"
                 >
                   +
                 </button>
@@ -70,7 +72,7 @@ export default function CartPage() {
               <button
                 className="cart-page-item-remove"
                 onClick={() => removeFromCart(item.id_producto)}
-                aria-label={`Remove ${item.nombre}`}
+                aria-label={`Eliminar ${item.nombre}`}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" />
@@ -81,24 +83,24 @@ export default function CartPage() {
           ))}
         </div>
         <div className="cart-page-summary" id="cart-summary">
-          <h3 className="cart-summary-title">Order Summary</h3>
+          <h3 className="cart-summary-title">Resumen del Pedido</h3>
           <div className="cart-summary-row">
             <span>Subtotal</span>
             <span>${totalPrice.toFixed(2)}</span>
           </div>
           <div className="cart-summary-row">
-            <span>Shipping</span>
-            <span>{totalPrice >= 100 ? 'Free' : '$12.00'}</span>
+            <span>Envío</span>
+            <span>{totalPrice >= 100 ? 'Gratis' : '$12.00'}</span>
           </div>
           <div className="cart-summary-row cart-summary-total-row">
             <span>Total</span>
             <span>${(totalPrice + (totalPrice >= 100 ? 0 : 12)).toFixed(2)}</span>
           </div>
           <Link href="/checkout" className="cart-checkout-btn" id="proceed-checkout">
-            PROCEED TO CHECKOUT
+            PROCEDER AL PAGO
           </Link>
           <button className="cart-clear-btn" onClick={clearCart}>
-            Clear Cart
+            Vaciar Carrito
           </button>
         </div>
       </div>
