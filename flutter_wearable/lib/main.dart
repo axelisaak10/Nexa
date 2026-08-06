@@ -410,7 +410,7 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: QrImageView(
-                  data: _token!,
+                  data: 'https://nexa-nine-navy.vercel.app/auth/watch?token=${_token!}',
                   version: QrVersions.auto,
                   size: 80,
                   backgroundColor: Colors.white,

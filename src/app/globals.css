@@ -2442,4 +2442,126 @@ button {
   color: #fff !important;
 }
 
+/* ─────────────────────────────────────────────────────
+   WATCH PAIRING PAGE (/auth/watch)
+───────────────────────────────────────────────────── */
+.watch-pairing-card {
+  max-width: 400px;
+}
 
+.watch-pairing-icon {
+  font-size: 2.8rem;
+  margin-bottom: 0.4rem;
+  line-height: 1;
+}
+
+.watch-token-badge {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.watch-token-badge strong {
+  color: var(--accent-secondary);
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.15em;
+  font-size: 0.92rem;
+}
+
+.watch-pairing-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 0 0.5rem;
+  text-align: center;
+}
+
+/* Spinner */
+.watch-pairing-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(200, 90, 42, 0.2);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: watch-spin 0.8s linear infinite;
+}
+
+@keyframes watch-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Success check */
+.watch-pairing-check {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a3d1a, #1f5c1f);
+  border: 2px solid #4caf50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: #4caf50;
+  animation: watch-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes watch-pop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* Error icon */
+.watch-pairing-error-icon {
+  font-size: 2.4rem;
+  opacity: 0.7;
+}
+
+/* Messages */
+.watch-pairing-msg {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+.watch-pairing-msg.success {
+  color: #81c784;
+}
+
+.watch-pairing-msg.error {
+  color: #ef9a9a;
+}
+
+
+/* --- Password eye toggle --- */
+.auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-wrapper .auth-input {
+  width: 100%;
+  padding-right: 2.8rem;
+}
+
+.auth-eye-btn {
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.auth-eye-btn:hover {
+  color: var(--accent-primary);
+}

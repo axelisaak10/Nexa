@@ -9,6 +9,7 @@ import { useToast } from '@/context/ToastContext';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +41,6 @@ export default function LoginPage() {
 
   const handleDemoLogin = async (demoEmail) => {
     setEmail(demoEmail);
-    setPassword('demo1234');
     setLoading(true);
     const result = await login(demoEmail, 'demo1234');
     if (result.success) {
@@ -52,6 +52,8 @@ export default function LoginPage() {
     }
     setLoading(false);
   };
+  // eslint-disable-next-line no-unused-vars
+  void handleDemoLogin;
 
   // Watch QR login: user enters the 8-char code shown on the smartwatch
   const handleWatchLogin = async (e) => {
@@ -127,37 +129,42 @@ export default function LoginPage() {
           </div>
           <div className="auth-form-group">
             <label className="auth-label" htmlFor="login-password">Contraseña</label>
-            <input
-              className="auth-input"
-              type="password"
-              id="login-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
+            <div className="auth-input-wrapper">
+              <input
+                className="auth-input"
+                type={showPassword ? 'text' : 'password'}
+                id="login-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                className="auth-eye-btn"
+                onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
           <button type="submit" className="auth-btn" disabled={loading} id="login-submit">
             {loading ? 'INGRESANDO...' : 'INICIAR SESIÓN'}
           </button>
         </form>
 
-        <div className="auth-divider">
-          <span>O PRUEBA CON UNA CUENTA DEMO</span>
-        </div>
-
-        <div className="auth-demo-grid">
-          <button type="button" onClick={() => handleDemoLogin('admin@nexa.com')} className="demo-chip-btn">
-            <span className="demo-chip-role">ADMINISTRADOR</span>
-            <span className="demo-chip-email">admin@nexa.com</span>
-          </button>
-          <button type="button" onClick={() => handleDemoLogin('demo@nexa.com')} className="demo-chip-btn">
-            <span className="demo-chip-role">CLIENTE DEMO</span>
-            <span className="demo-chip-email">demo@nexa.com</span>
-          </button>
-        </div>
-
-        {/* Smartwatch QR Login Section */}
         <div className="auth-divider">
           <span>O INICIA SESIÓN CON SMARTWATCH</span>
         </div>

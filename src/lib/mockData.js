@@ -187,12 +187,15 @@ export async function getCategorias() {
 }
 
 export async function loginUsuario(email, password) {
+  // Normalize email to lowercase to avoid case-sensitivity issues
+  const normalizedEmail = email.trim().toLowerCase();
+
   if (supabase) {
     try {
       const { data, error } = await supabase
         .from('usuarios')
         .select('id_usuario, nombre, email, id_rol, password_hash')
-        .eq('email', email)
+        .ilike('email', normalizedEmail)
         .single();
       
       if (!error && data) {
@@ -202,7 +205,11 @@ export async function loginUsuario(email, password) {
         if (passwordMatch) {
           return { success: true, user: { id_usuario: data.id_usuario, nombre: data.nombre, email: data.email, id_rol: data.id_rol } };
         }
-        return { success: false, error: 'Contraseña incorrecta para este usuario.' };
+        return { success: false, error: 'Contraseña incorrecta. Verifica tu contraseña e intenta de nuevo.' };
+      }
+      // User not found in Supabase
+      if (error && error.code !== 'PGRST116') {
+        console.error('Supabase login error:', error);
       }
     } catch (e) {
       console.error('Supabase login failed:', e);
@@ -210,21 +217,21 @@ export async function loginUsuario(email, password) {
   }
   
   // Safe Bcrypt comparison check for hardcoded fallback users
-  if (email === 'admin@nexa.com') {
-    const match = await bcrypt.compare(password, '$2a$10$7q5f5mJmC6HlD3iN78D8Ae/iN/y/g0W1WlSjK16hR0p3a7a9Z3x8q'); // 'nexa-admin-password'
+  if (normalizedEmail === 'admin@nexa.com') {
+    const match = await bcrypt.compare(password, '$2a$10$7q5f5mJmC6HlD3iN78D8Ae/iN/y/g0W1WlSjK16hR0p3a7a9Z3x8q');
     const legacyMatch = password === 'admin123';
     if (match || legacyMatch) {
       return { success: true, user: { id_usuario: 1, nombre: 'Administrador Nexa', email: 'admin@nexa.com', id_rol: 1 } };
     }
   }
-  if (email === 'demo@nexa.com') {
-    const match = await bcrypt.compare(password, '$2a$10$tZ9c/JqN/B8c4y7J7c2oOe/y0G1G1wK8uSjK16hR0p3a7a9Z3x8q'); // 'nexa-demo-password'
+  if (normalizedEmail === 'demo@nexa.com') {
+    const match = await bcrypt.compare(password, '$2a$10$tZ9c/JqN/B8c4y7J7c2oOe/y0G1G1wK8uSjK16hR0p3a7a9Z3x8q');
     const legacyMatch = password === 'demo123';
     if (match || legacyMatch) {
       return { success: true, user: { id_usuario: 2, nombre: 'Cliente Demo', email: 'demo@nexa.com', id_rol: 2 } };
     }
   }
-  return { success: false, error: 'Correo o contraseña incorrectos. Verifica tus datos o usa una cuenta demo.' };
+  return { success: false, error: 'Correo o contraseña incorrectos. Verifica tus datos e intenta de nuevo.' };
 }
 
 export async function registerUsuario(nombre, email, password) {
