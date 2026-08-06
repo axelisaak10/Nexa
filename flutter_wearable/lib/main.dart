@@ -210,7 +210,7 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
   Timer? _expireTimer;
   int _secondsLeft = 180;
 
-  static const String _baseUrl = 'http://10.0.2.2:3000';
+  static const String _baseUrl = 'https://nexa-nine-navy.vercel.app';
 
   @override
   void initState() {
@@ -248,6 +248,8 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
     }
   }
 
+  int _failedPolls = 0;
+
   void _startPolling() {
     _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
       if (_token == null) return;
@@ -256,6 +258,7 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
           Uri.parse('$_baseUrl/api/watch/qr-session?token=$_token'),
         ).timeout(const Duration(seconds: 3));
         if (res.statusCode == 200) {
+          _failedPolls = 0;
           final data = json.decode(res.body);
           final newStatus = data['status'] as String? ?? 'pending';
           if (newStatus != _status) {
@@ -276,8 +279,16 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
               _expireTimer?.cancel();
             }
           }
+        } else {
+          _failedPolls++;
         }
-      } catch (_) {}
+      } catch (_) {
+        _failedPolls++;
+        // Solo si falla 5 veces consecutivas (10 segundos sin red) marcamos error
+        if (_failedPolls > 5 && _status == 'pending') {
+          // Mantener en pending o reintentar sin romper la vista
+        }
+      }
     });
   }
 
