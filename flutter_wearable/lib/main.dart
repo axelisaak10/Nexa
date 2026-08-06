@@ -208,7 +208,7 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
   String _status = 'loading'; // loading | pending | confirmed | expired | error
   Timer? _pollTimer;
   Timer? _expireTimer;
-  int _secondsLeft = 180;
+  int _secondsLeft = 600;
 
   static const String _baseUrl = 'https://nexa-nine-navy.vercel.app';
 
@@ -236,7 +236,7 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
         setState(() {
           _token = data['token'];
           _status = 'pending';
-          _secondsLeft = 180;
+          _secondsLeft = data['expiresInSeconds'] as int? ?? 600;
         });
         _startPolling();
         _startCountdown();
