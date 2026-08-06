@@ -42,12 +42,6 @@ function WatchPairingInner() {
   };
 
   useEffect(() => {
-    // Si no hay token en la URL, expira directamente
-    if (!token) {
-      setStatus('expired');
-      return;
-    }
-
     // Comprobar si hay un usuario guardado en localStorage directamente por resguardo
     let currentUser = user;
     if (!currentUser && typeof window !== 'undefined') {
@@ -58,6 +52,10 @@ function WatchPairingInner() {
     }
 
     const timer = setTimeout(() => {
+      if (!token) {
+        setStatus('expired');
+        return;
+      }
       if (currentUser) {
         setStatus('confirming');
         confirmToken(currentUser.id_usuario);
