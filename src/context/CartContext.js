@@ -2,45 +2,40 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/context/ToastContext';
+import { useAuth } from '@/context/AuthContext';
 
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
-  const [items, setItems] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const savedCart = localStorage.getItem('nexa-cart');
-        return savedCart ? JSON.parse(savedCart) : [];
-      } catch (e) {
-        console.error('Failed to load cart from localStorage:', e);
-        return [];
-      }
-    }
-    return [];
-  });
+  const [items, setItems] = useState([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { showToast } = useToast();
+  const { user, fetchWithAuth } = useAuth();
 
-  // Mark component as mounted
-  useEffect(() => {
-    Promise.resolve().then(() => {
-      setMounted(true);
-    });
-  }, []);
-
-  // Save cart to localStorage on changes
-  useEffect(() => {
-    if (mounted) {
-      try {
-        localStorage.setItem('nexa-cart', JSON.stringify(items));
-      } catch (e) {
-        console.error('Failed to save cart to localStorage:', e);
+  // Load cart from DB when user changes / mounts
+  const loadCartFromDB = useCallback(async () => {
+    try {
+      const res = await fetchWithAuth('/api/cart');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.items)) {
+          setItems(data.items);
+        }
       }
+    } catch (e) {
+      console.error('Error fetching cart from DB:', e);
+    } finally {
+      setMounted(true);
     }
-  }, [items, mounted]);
+  }, [fetchWithAuth]);
 
-  const addToCart = useCallback((product, quantity = 1) => {
+  useEffect(() => {
+    loadCartFromDB();
+  }, [user, loadCartFromDB]);
+
+  const addToCart = useCallback(async (product, quantity = 1) => {
+    // Optimistic UI update
     setItems(prev => {
       const existing = prev.find(item => item.id_producto === product.id_producto);
       if (existing) {
@@ -53,30 +48,52 @@ export function CartProvider({ children }) {
       return [...prev, {
         id_producto: product.id_producto,
         nombre: product.nombre,
-        precio: product.precio,
+        precio: Number(product.precio),
         url_imagen: product.url_imagen,
         cantidad: quantity
       }];
     });
-    showToast(`Added ${product.nombre} to cart`, 'success');
+
+    showToast(`Añadido ${product.nombre} al carrito`, 'success');
     setIsDrawerOpen(true);
-  }, [showToast]);
 
-  const removeFromCart = useCallback((productId) => {
-    const item = items.find(i => i.id_producto === productId);
-    setItems(prev => prev.filter(item => item.id_producto !== productId));
-    if (item) {
-      showToast(`Removed ${item.nombre} from cart`, 'success');
-    }
-  }, [items, showToast]);
-
-  const updateQuantity = useCallback((productId, newQuantity) => {
-    if (newQuantity < 1) {
-      const item = items.find(i => i.id_producto === productId);
-      setItems(prev => prev.filter(item => item.id_producto !== productId));
-      if (item) {
-        showToast(`Removed ${item.nombre} from cart`, 'success');
+    // Sync to DB
+    if (user) {
+      try {
+        await fetchWithAuth('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'add', product, quantity })
+        });
+      } catch (e) {
+        console.error('Error syncing add to cart DB:', e);
       }
+    }
+  }, [showToast, user, fetchWithAuth]);
+
+  const removeFromCart = useCallback(async (productId) => {
+    const item = items.find(i => i.id_producto === productId);
+    setItems(prev => prev.filter(i => i.id_producto !== productId));
+    if (item) {
+      showToast(`Eliminado ${item.nombre} del carrito`, 'success');
+    }
+
+    if (user) {
+      try {
+        await fetchWithAuth('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'remove', id_producto: productId })
+        });
+      } catch (e) {
+        console.error('Error syncing remove from cart DB:', e);
+      }
+    }
+  }, [items, showToast, user, fetchWithAuth]);
+
+  const updateQuantity = useCallback(async (productId, newQuantity) => {
+    if (newQuantity < 1) {
+      removeFromCart(productId);
       return;
     }
     setItems(prev =>
@@ -86,12 +103,34 @@ export function CartProvider({ children }) {
           : item
       )
     );
-  }, [items, showToast]);
 
-  const clearCart = useCallback(() => {
+    if (user) {
+      try {
+        await fetchWithAuth('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update', id_producto: productId, quantity: newQuantity })
+        });
+      } catch (e) {
+        console.error('Error syncing update cart qty DB:', e);
+      }
+    }
+  }, [user, fetchWithAuth, removeFromCart]);
+
+  const clearCart = useCallback(async () => {
     setItems([]);
-    showToast('Cart cleared', 'success');
-  }, [showToast]);
+    if (user) {
+      try {
+        await fetchWithAuth('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'clear' })
+        });
+      } catch (e) {
+        console.error('Error syncing clear cart DB:', e);
+      }
+    }
+  }, [user, fetchWithAuth]);
 
   const toggleDrawer = useCallback(() => {
     setIsDrawerOpen(prev => !prev);
@@ -102,10 +141,11 @@ export function CartProvider({ children }) {
   }, []);
 
   const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0);
-  const totalPrice = items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+  const totalPrice = items.reduce((sum, item) => sum + (Number(item.precio) * item.cantidad), 0);
 
   return (
     <CartContext.Provider value={{
+      cart: items,
       items,
       isDrawerOpen,
       addToCart,
@@ -130,4 +170,3 @@ export function useCart() {
   }
   return context;
 }
-

@@ -1,35 +1,73 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 
 const FavoritesContext = createContext(null);
 
 export function FavoritesProvider({ children }) {
-  const [favorites, setFavorites] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('nexa-favorites');
-        return saved ? JSON.parse(saved) : [];
-      } catch {
-        return [];
+  const [favorites, setFavorites] = useState([]);
+  const [mounted, setMounted] = useState(false);
+  const { user, fetchWithAuth } = useAuth();
+  const { showToast } = useToast();
+
+  const loadFavoritesFromDB = useCallback(async () => {
+    try {
+      const res = await fetchWithAuth('/api/favorites');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.favorites)) {
+          setFavorites(data.favorites);
+        }
       }
+    } catch (e) {
+      console.error('Error fetching favorites from DB:', e);
+    } finally {
+      setMounted(true);
     }
-    return [];
-  });
+  }, [fetchWithAuth]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('nexa-favorites', JSON.stringify(favorites));
-    } catch {}
-  }, [favorites]);
+    loadFavoritesFromDB();
+  }, [user, loadFavoritesFromDB]);
 
-  const toggleFavorite = useCallback((product) => {
+  const toggleFavorite = useCallback(async (product) => {
+    if (!user) {
+      showToast('Inicia sesión para guardar favoritos en tu cuenta', 'error');
+      return;
+    }
+
+    const exists = favorites.some(f => f.id_producto === product.id_producto);
+
+    // Optimistic UI update
     setFavorites(prev => {
-      const exists = prev.find(f => f.id_producto === product.id_producto);
       if (exists) return prev.filter(f => f.id_producto !== product.id_producto);
       return [...prev, product];
     });
-  }, []);
+
+    if (exists) {
+      showToast(`Quitado ${product.nombre} de favoritos`, 'info');
+    } else {
+      showToast(`¡Añadido ${product.nombre} a favoritos! ❤️`, 'success');
+    }
+
+    try {
+      const res = await fetchWithAuth('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.favorites)) {
+          setFavorites(data.favorites);
+        }
+      }
+    } catch (e) {
+      console.error('Error syncing favorite to DB:', e);
+    }
+  }, [user, favorites, showToast, fetchWithAuth]);
 
   const isFavorite = useCallback((id) => {
     return favorites.some(f => f.id_producto === id);
@@ -38,7 +76,7 @@ export function FavoritesProvider({ children }) {
   const clearFavorites = useCallback(() => setFavorites([]), []);
 
   return (
-    <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite, clearFavorites }}>
+    <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite, clearFavorites, mounted }}>
       {children}
     </FavoritesContext.Provider>
   );

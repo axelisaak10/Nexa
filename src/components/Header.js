@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useFavorites } from '@/context/FavoritesContext';
 import Sidebar from './Sidebar';
 import CartDrawer from './CartDrawer';
 
@@ -12,6 +13,8 @@ export default function Header() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const { totalItems, toggleDrawer } = useCart();
   const { user, logout } = useAuth();
+  const { favorites } = useFavorites();
+  const favCount = favorites.length;
   const dropdownRef = useRef(null);
 
   const isAdmin = user && (user.id_rol === 1 || user.email === 'admin@nexa.com');
@@ -117,6 +120,16 @@ export default function Header() {
                       </svg>
                       <span>Mi Perfil</span>
                     </Link>
+                    <Link
+                      href="/favorites"
+                      className="profile-dropdown-item"
+                      onClick={() => setUserDropdownOpen(false)}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                      </svg>
+                      <span>Favoritos</span>
+                    </Link>
                     {isAdmin && (
                       <Link
                         href="/dashboard"
@@ -155,6 +168,21 @@ export default function Header() {
                 ENTRAR
               </Link>
             )}
+
+            <Link
+              href="/favorites"
+              className="header-cart-btn"
+              aria-label="Ver mis favoritos"
+              id="favorites-btn"
+              style={{ marginRight: '6px' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill={favCount > 0 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8">
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+              </svg>
+              {favCount > 0 && (
+                <span className="header-cart-badge" id="fav-badge" style={{ backgroundColor: '#8B1A1A' }}>{favCount}</span>
+              )}
+            </Link>
 
             <button
               className="header-cart-btn"

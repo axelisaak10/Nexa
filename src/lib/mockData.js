@@ -256,6 +256,144 @@ export async function getProductoById(id) {
   return mockProductos.find(p => p.id_producto === Number(id)) || mockProductos[0];
 }
 
+// ─── DB persistence for CART (carrito_items) ──────────────────────────────
+export async function getCarritoDB(id_usuario) {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('carrito_items')
+        .select('id_carrito, id_producto, cantidad, productos(id_producto, nombre, precio, url_imagen)')
+        .eq('id_usuario', id_usuario);
+      if (!error && data) {
+        return data.map(item => ({
+          id_producto: item.id_producto,
+          nombre: item.productos?.nombre || 'Producto',
+          precio: Number(item.productos?.precio || 0),
+          url_imagen: item.productos?.url_imagen || '/images/products/travertine_tray.png',
+          cantidad: item.cantidad
+        }));
+      }
+    } catch (e) {
+      console.error('Supabase getCarritoDB error:', e);
+    }
+  }
+  return [];
+}
+
+export async function saveItemCarritoDB(id_usuario, product, cantidad = 1) {
+  if (supabase) {
+    try {
+      const { data: existing } = await supabase
+        .from('carrito_items')
+        .select('id_carrito, cantidad')
+        .eq('id_usuario', id_usuario)
+        .eq('id_producto', product.id_producto)
+        .maybeSingle();
+
+      if (existing) {
+        const newQty = existing.cantidad + cantidad;
+        if (newQty <= 0) {
+          await supabase.from('carrito_items').delete().eq('id_carrito', existing.id_carrito);
+        } else {
+          await supabase.from('carrito_items').update({ cantidad: newQty }).eq('id_carrito', existing.id_carrito);
+        }
+      } else if (cantidad > 0) {
+        await supabase.from('carrito_items').insert([{
+          id_usuario,
+          id_producto: product.id_producto,
+          cantidad
+        }]);
+      }
+      return { success: true };
+    } catch (e) {
+      console.error('Supabase saveItemCarritoDB error:', e);
+    }
+  }
+  return { success: true };
+}
+
+export async function updateCantidadCarritoDB(id_usuario, id_producto, cantidad) {
+  if (supabase) {
+    try {
+      if (cantidad <= 0) {
+        await supabase.from('carrito_items').delete().eq('id_usuario', id_usuario).eq('id_producto', id_producto);
+      } else {
+        await supabase.from('carrito_items').upsert([{ id_usuario, id_producto, cantidad }], { onConflict: 'id_usuario,id_producto' });
+      }
+      return { success: true };
+    } catch (e) {
+      console.error('Supabase updateCantidadCarritoDB error:', e);
+    }
+  }
+  return { success: true };
+}
+
+export async function removeItemCarritoDB(id_usuario, id_producto) {
+  if (supabase) {
+    try {
+      await supabase.from('carrito_items').delete().eq('id_usuario', id_usuario).eq('id_producto', id_producto);
+      return { success: true };
+    } catch (e) {
+      console.error('Supabase removeItemCarritoDB error:', e);
+    }
+  }
+  return { success: true };
+}
+
+export async function clearCarritoDB(id_usuario) {
+  if (supabase) {
+    try {
+      await supabase.from('carrito_items').delete().eq('id_usuario', id_usuario);
+      return { success: true };
+    } catch (e) {
+      console.error('Supabase clearCarritoDB error:', e);
+    }
+  }
+  return { success: true };
+}
+
+// ─── DB persistence for FAVORITES (favoritos) ────────────────────────────
+export async function getFavoritosDB(id_usuario) {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('favoritos')
+        .select('id_favorito, id_producto, productos(*, categorias(nombre))')
+        .eq('id_usuario', id_usuario);
+      if (!error && data) {
+        return data.map(item => item.productos).filter(Boolean);
+      }
+    } catch (e) {
+      console.error('Supabase getFavoritosDB error:', e);
+    }
+  }
+  return [];
+}
+
+export async function toggleFavoritoDB(id_usuario, product) {
+  if (supabase) {
+    try {
+      const { data: existing } = await supabase
+        .from('favoritos')
+        .select('id_favorito')
+        .eq('id_usuario', id_usuario)
+        .eq('id_producto', product.id_producto)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase.from('favoritos').delete().eq('id_favorito', existing.id_favorito);
+        return { success: true, action: 'removed' };
+      } else {
+        await supabase.from('favoritos').insert([{ id_usuario, id_producto: product.id_producto }]);
+        return { success: true, action: 'added' };
+      }
+    } catch (e) {
+      console.error('Supabase toggleFavoritoDB error:', e);
+    }
+  }
+  return { success: true, action: 'added' };
+}
+
 export async function getCategorias() {
   if (supabase) {
     try {
