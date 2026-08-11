@@ -18,7 +18,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [newUser, setNewUser] = useState(null); // usuario recién creado
 
-  const { register } = useAuth();
+  const { user, register } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
 
@@ -47,11 +47,12 @@ export default function RegisterPage() {
   const handlePinComplete = async (pin) => {
     setPinError('');
     setLoading(true);
+    const targetUserId = newUser?.id_usuario || user?.id_usuario;
     try {
       const res = await fetch('/api/auth/pin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_usuario: newUser?.id_usuario, pin })
+        body: JSON.stringify({ id_usuario: targetUserId, pin })
       });
       const data = await res.json();
       if (data.success) {
@@ -59,7 +60,7 @@ export default function RegisterPage() {
         router.push('/');
       } else {
         setPinError(data.error || 'Error al guardar PIN. Intenta de nuevo.');
-        showToast('Error al guardar PIN', 'error');
+        showToast(data.error || 'Error al guardar PIN', 'error');
       }
     } catch {
       setPinError('Error de red. Intenta de nuevo.');

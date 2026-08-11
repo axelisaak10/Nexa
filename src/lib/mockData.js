@@ -20,9 +20,9 @@ export async function updateUsuarioAdmin(id_usuario, { nombre, email, id_rol, is
     const salt = await bcrypt.genSalt(10);
     updates.password_hash = await bcrypt.hash(password.trim(), salt);
   }
-  if (pin && pin.trim()) {
+  if (pin && String(pin).trim()) {
     const salt = await bcrypt.genSalt(10);
-    updates.pin_hash = await bcrypt.hash(pin.trim(), salt);
+    updates.pin_hash = await bcrypt.hash(String(pin).trim(), salt);
   }
 
   if (supabase) {
@@ -31,11 +31,18 @@ export async function updateUsuarioAdmin(id_usuario, { nombre, email, id_rol, is
         .from('usuarios')
         .update(updates)
         .eq('id_usuario', id_usuario)
-        .select()
-        .single();
-      if (!error && data) return { success: true, usuario: data };
+        .select();
+      if (error) {
+        console.error('Supabase updateUsuarioAdmin error:', error);
+        if (error.message?.includes('pin_hash')) {
+          return { success: false, error: 'Falta la columna pin_hash en Supabase. Ejecuta: ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS pin_hash VARCHAR(255);' };
+        }
+        return { success: false, error: `Error de Supabase: ${error.message}` };
+      }
+      return { success: true, usuario: data ? data[0] : null };
     } catch (e) {
       console.error('Supabase updateUsuarioAdmin error:', e);
+      return { success: false, error: e.message };
     }
   }
   return { success: true };
@@ -546,17 +553,27 @@ export async function updateRolUsuario(id_usuario, nuevoRol) {
 
 // ─── PIN MANAGEMENT ────────────────────────────────────────────────────────
 export async function setPinUsuario(id_usuario, pin) {
+  if (!id_usuario || !pin) return { success: false, error: 'ID de usuario y PIN requeridos' };
   const salt = await bcrypt.genSalt(10);
-  const pin_hash = await bcrypt.hash(pin, salt);
+  const pin_hash = await bcrypt.hash(String(pin).trim(), salt);
   if (supabase) {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('usuarios')
         .update({ pin_hash })
-        .eq('id_usuario', id_usuario);
-      if (!error) return { success: true };
+        .eq('id_usuario', id_usuario)
+        .select();
+      if (error) {
+        console.error('Supabase setPinUsuario error:', error);
+        if (error.message?.includes('pin_hash')) {
+          return { success: false, error: 'Falta la columna pin_hash en Supabase. Ejecuta: ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS pin_hash VARCHAR(255);' };
+        }
+        return { success: false, error: error.message };
+      }
+      return { success: true };
     } catch (e) {
       console.error('Supabase setPinUsuario error:', e);
+      return { success: false, error: e.message };
     }
   }
   // fallback: store in mock
