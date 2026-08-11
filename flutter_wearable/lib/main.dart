@@ -99,26 +99,25 @@ class _WatchPinAuthScreenState extends State<WatchPinAuthScreen> {
               colors: [Color(0xFF26201B), Color(0xFF0F0E0D)],
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 10),
+              const SizedBox(height: 4),
               const Text('N E X A',
                   style: TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w900,
+                      fontSize: 10, fontWeight: FontWeight.w900,
                       letterSpacing: 2, color: Color(0xFFF5F0EB))),
-              const SizedBox(height: 2),
               const Text('ACCESO',
                   style: TextStyle(
-                      fontSize: 7, letterSpacing: 2,
+                      fontSize: 6.5, letterSpacing: 1.5,
                       color: Color(0xFFB8860B), fontWeight: FontWeight.w700)),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(4, (i) => Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 5),
-                  width: 9, height: 9,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: 8, height: 8,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: i < _pin.length ? const Color(0xFFC85A2A) : const Color(0xFF3A342E),
@@ -129,21 +128,23 @@ class _WatchPinAuthScreenState extends State<WatchPinAuthScreen> {
                   ),
                 )),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: GridView.count(
                     crossAxisCount: 3,
-                    childAspectRatio: 1.35,
-                    mainAxisSpacing: 3,
-                    crossAxisSpacing: 4,
+                    childAspectRatio: 1.85,
+                    mainAxisSpacing: 2,
+                    crossAxisSpacing: 3,
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
                       ...'123456789'.split('').map(_buildNumBtn),
                       _buildActionBtn('C', onTap: () => setState(() => _pin = '')),
                       _buildNumBtn('0'),
                       IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                         onPressed: () => setState(() {
                           if (_pin.isNotEmpty) _pin = _pin.substring(0, _pin.length - 1);
                         }),
@@ -596,32 +597,27 @@ class _WatchPinVerifyScreenState extends State<WatchPinVerifyScreen> {
               colors: [Color(0xFF26201B), Color(0xFF0F0E0D)],
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const SizedBox(height: 2),
               const Text('N E X A',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900,
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900,
                       letterSpacing: 2, color: Color(0xFFF5F0EB))),
-              const SizedBox(height: 2),
               const Text('INGRESA TU PIN',
-                  style: TextStyle(fontSize: 7, letterSpacing: 1.5,
+                  style: TextStyle(fontSize: 6.5, letterSpacing: 1.5,
                       color: Color(0xFFB8860B), fontWeight: FontWeight.w700)),
-              const SizedBox(height: 2),
               if (_error != null)
                 Text(_error!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 7, color: Color(0xFFC85A2A)))
-              else
-                const Text('El PIN que creaste al registrarte',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 6.5, color: Colors.grey)),
-              const SizedBox(height: 8),
+                    style: const TextStyle(fontSize: 6.5, color: Color(0xFFC85A2A))),
+              const SizedBox(height: 3),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(4, (i) => Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 5),
-                  width: 9, height: 9,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: 8, height: 8,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: i < _pin.length ? const Color(0xFFC85A2A) : const Color(0xFF3A342E),
@@ -632,23 +628,23 @@ class _WatchPinVerifyScreenState extends State<WatchPinVerifyScreen> {
                   ),
                 )),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 2),
               if (_loading)
                 const SizedBox(
-                  width: 16, height: 16,
+                  width: 12, height: 12,
                   child: CircularProgressIndicator(
                     strokeWidth: 1.5, color: Color(0xFFC85A2A),
                   ),
                 ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: GridView.count(
                     crossAxisCount: 3,
-                    childAspectRatio: 1.5,
-                    mainAxisSpacing: 3,
-                    crossAxisSpacing: 4,
+                    childAspectRatio: 1.85,
+                    mainAxisSpacing: 2,
+                    crossAxisSpacing: 3,
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
                       ...'123456789'.split('').map((v) => _buildKey(v, () => _handleKey(v))),
