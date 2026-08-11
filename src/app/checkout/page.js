@@ -44,34 +44,38 @@ export default function CheckoutPage() {
   });
 
   // Autocargar la dirección guardada del usuario desde la BD Supabase
-  const loadSavedAddress = useCallback(async () => {
-    try {
-      const res = await fetchWithAuth('/api/address');
-      if (res.ok) {
-        const data = await res.json();
-        const d = data.success ? data.direccion : null;
-        setForm(prev => ({
-          ...prev,
-          nombre: user?.nombre || prev.nombre,
-          email: user?.email || prev.email,
-          calle_numero: d?.calle_numero || prev.calle_numero,
-          colonia: d?.colonia || prev.colonia,
-          ciudad: d?.ciudad || prev.ciudad,
-          codigo_postal: d?.codigo_postal || prev.codigo_postal,
-          telefono_contacto: d?.telefono_contacto || prev.telefono_contacto
-        }));
-        if (d) setAddressLoaded(true);
-      }
-    } catch (e) {
-      console.error('Error loading address in checkout:', e);
-    }
-  }, [fetchWithAuth, user]);
-
   useEffect(() => {
-    if (user) {
-      loadSavedAddress();
-    }
-  }, [user, loadSavedAddress]);
+    let isMounted = true;
+    if (!user) return;
+
+    const fetchAddress = async () => {
+      try {
+        const res = await fetchWithAuth('/api/address');
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          const d = data.success ? data.direccion : null;
+          if (isMounted) {
+            setForm(prev => ({
+              ...prev,
+              nombre: user?.nombre || prev.nombre,
+              email: user?.email || prev.email,
+              calle_numero: d?.calle_numero || prev.calle_numero,
+              colonia: d?.colonia || prev.colonia,
+              ciudad: d?.ciudad || prev.ciudad,
+              codigo_postal: d?.codigo_postal || prev.codigo_postal,
+              telefono_contacto: d?.telefono_contacto || prev.telefono_contacto
+            }));
+            if (d) setAddressLoaded(true);
+          }
+        }
+      } catch (e) {
+        console.error('Error loading address in checkout:', e);
+      }
+    };
+
+    fetchAddress();
+    return () => { isMounted = false; };
+  }, [user, fetchWithAuth]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
