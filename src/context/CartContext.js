@@ -13,26 +13,26 @@ export function CartProvider({ children }) {
   const { showToast } = useToast();
   const { user, fetchWithAuth } = useAuth();
 
-  // Load cart from DB when user changes / mounts
-  const loadCartFromDB = useCallback(async () => {
-    try {
-      const res = await fetchWithAuth('/api/cart');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.items)) {
-          setItems(data.items);
-        }
-      }
-    } catch (e) {
-      console.error('Error fetching cart from DB:', e);
-    } finally {
-      setMounted(true);
-    }
-  }, [fetchWithAuth]);
-
   useEffect(() => {
-    loadCartFromDB();
-  }, [user, loadCartFromDB]);
+    let isMounted = true;
+    const fetchCart = async () => {
+      try {
+        const res = await fetchWithAuth('/api/cart');
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.items) && isMounted) {
+            setItems(data.items);
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching cart from DB:', e);
+      } finally {
+        if (isMounted) setMounted(true);
+      }
+    };
+    fetchCart();
+    return () => { isMounted = false; };
+  }, [user, fetchWithAuth]);
 
   const addToCart = useCallback(async (product, quantity = 1) => {
     // Optimistic UI update

@@ -7,8 +7,9 @@ export default function PinPad({ onComplete, title, subtitle, error, loading, mo
 
   useEffect(() => {
     if (error) {
-      setShake(true);
-      setTimeout(() => { setShake(false); setDigits([]); }, 600);
+      const t1 = setTimeout(() => setShake(true), 0);
+      const t2 = setTimeout(() => { setShake(false); setDigits([]); }, 600);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
     }
   }, [error]);
 

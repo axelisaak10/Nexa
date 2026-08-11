@@ -12,25 +12,26 @@ export function FavoritesProvider({ children }) {
   const { user, fetchWithAuth } = useAuth();
   const { showToast } = useToast();
 
-  const loadFavoritesFromDB = useCallback(async () => {
-    try {
-      const res = await fetchWithAuth('/api/favorites');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.favorites)) {
-          setFavorites(data.favorites);
-        }
-      }
-    } catch (e) {
-      console.error('Error fetching favorites from DB:', e);
-    } finally {
-      setMounted(true);
-    }
-  }, [fetchWithAuth]);
-
   useEffect(() => {
-    loadFavoritesFromDB();
-  }, [user, loadFavoritesFromDB]);
+    let isMounted = true;
+    const fetchFavs = async () => {
+      try {
+        const res = await fetchWithAuth('/api/favorites');
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.favorites) && isMounted) {
+            setFavorites(data.favorites);
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching favorites from DB:', e);
+      } finally {
+        if (isMounted) setMounted(true);
+      }
+    };
+    fetchFavs();
+    return () => { isMounted = false; };
+  }, [user, fetchWithAuth]);
 
   const toggleFavorite = useCallback(async (product) => {
     if (!user) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -11,33 +11,28 @@ function getCookie(name) {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // Restore user session from cookie on mount
-  useEffect(() => {
+  const [token, setToken] = useState(() => getCookie('nexa-token') || null);
+  const [user, setUser] = useState(() => {
     const savedToken = getCookie('nexa-token');
     if (savedToken) {
-      setToken(savedToken);
       try {
-        // Decode base64 JWT payload safely
         const payload = JSON.parse(atob(savedToken.split('.')[1]));
         if (payload && payload.exp * 1000 > Date.now()) {
-          setUser({
+          return {
             id_usuario: payload.id_usuario,
             nombre: payload.nombre,
             email: payload.email,
             id_rol: payload.id_rol,
             is_enabled: payload.is_enabled
-          });
+          };
         }
       } catch (e) {
         console.error('Failed to parse JWT cookie:', e);
       }
     }
-    setLoading(false);
-  }, []);
+    return null;
+  });
+  const [loading] = useState(false);
 
   const login = useCallback(async (email, password) => {
     try {

@@ -49,31 +49,26 @@ export default function CheckoutPage() {
       const res = await fetchWithAuth('/api/address');
       if (res.ok) {
         const data = await res.json();
-        if (data.success && data.direccion) {
-          const d = data.direccion;
-          setForm(prev => ({
-            ...prev,
-            calle_numero: d.calle_numero || prev.calle_numero,
-            colonia: d.colonia || prev.colonia,
-            ciudad: d.ciudad || prev.ciudad,
-            codigo_postal: d.codigo_postal || prev.codigo_postal,
-            telefono_contacto: d.telefono_contacto || prev.telefono_contacto
-          }));
-          setAddressLoaded(true);
-        }
+        const d = data.success ? data.direccion : null;
+        setForm(prev => ({
+          ...prev,
+          nombre: user?.nombre || prev.nombre,
+          email: user?.email || prev.email,
+          calle_numero: d?.calle_numero || prev.calle_numero,
+          colonia: d?.colonia || prev.colonia,
+          ciudad: d?.ciudad || prev.ciudad,
+          codigo_postal: d?.codigo_postal || prev.codigo_postal,
+          telefono_contacto: d?.telefono_contacto || prev.telefono_contacto
+        }));
+        if (d) setAddressLoaded(true);
       }
     } catch (e) {
       console.error('Error loading address in checkout:', e);
     }
-  }, [fetchWithAuth]);
+  }, [fetchWithAuth, user]);
 
   useEffect(() => {
     if (user) {
-      setForm(prev => ({
-        ...prev,
-        nombre: user.nombre || prev.nombre,
-        email: user.email || prev.email
-      }));
       loadSavedAddress();
     }
   }, [user, loadSavedAddress]);

@@ -3,19 +3,14 @@ import { useState, useEffect } from 'react';
 
 export default function FlutterEmbed() {
   const [screen, setScreen] = useState('qr'); // 'qr' | 'pin' | 'home'
-  const [token, setToken] = useState('NEXA-88A');
-  const [enteredPin, setEnteredPin] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  // Generate random QR token
-  useEffect(() => {
+  const [token, setToken] = useState(() => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = 'NX-';
     for (let i = 0; i < 5; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    setToken(code);
-  }, []);
+    return code;
+  });
 
   const handleNumClick = (n) => {
     if (enteredPin.length < 4) {
