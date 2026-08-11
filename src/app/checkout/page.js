@@ -1,23 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 
 export default function CheckoutPage() {
-  const { items, totalPrice, clearCart } = useCart();
+  const { cart, totalPrice, clearCart } = useCart();
   const { user, fetchWithAuth } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState(null);
-  const [metodoPago, setMetodoPago] = useState('paypal');
-  const [savedAddressLoaded, setSavedAddressLoaded] = useState(false);
+  const [metodoPago, setMetodoPago] = useState('paypal'); // 'paypal' | 'card'
+  const [addressLoaded, setAddressLoaded] = useState(false);
+
+  const items = cart || [];
 
   const [form, setForm] = useState({
     nombre: user?.nombre || '',
@@ -29,12 +31,19 @@ export default function CheckoutPage() {
     telefono_contacto: ''
   });
 
-  // Auto-load saved address from DB when user is logged in
-  useEffect(() => {
-    if (!user?.id_usuario) return;
-    fetchWithAuth('/api/address')
-      .then(r => r.json())
-      .then(data => {
+  const [cardForm, setCardForm] = useState({
+    numero: '',
+    expiracion: '',
+    cvv: '',
+    titular: ''
+  });
+
+  // Autocargar la dirección guardada del usuario desde la BD Supabase
+  const loadSavedAddress = useCallback(async () => {
+    try {
+      const res = await fetchWithAuth('/api/address');
+      if (res.ok) {
+        const data = await res.json();
         if (data.success && data.direccion) {
           const d = data.direccion;
           setForm(prev => ({
@@ -43,101 +52,67 @@ export default function CheckoutPage() {
             colonia: d.colonia || prev.colonia,
             ciudad: d.ciudad || prev.ciudad,
             codigo_postal: d.codigo_postal || prev.codigo_postal,
-            telefono_contacto: d.telefono_contacto || prev.telefono_contacto,
+            telefono_contacto: d.telefono_contacto || prev.telefono_contacto
           }));
-          setSavedAddressLoaded(true);
+          setAddressLoaded(true);
         }
-      })
-      .catch(() => {});
-  }, [user?.id_usuario, fetchWithAuth]);
+      }
+    } catch (e) {
+      console.error('Error loading address in checkout:', e);
+    }
+  }, [fetchWithAuth]);
 
-  const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'BAAZuDEi8xdRFWFcOJSOwDxJtNePzpPUNVRNdwtiqiBtImgSc8vkTu4FPCxVvpUSxqJpTP_pmX2CC_iLfk';
+  useEffect(() => {
+    if (user) {
+      setForm(prev => ({
+        ...prev,
+        nombre: user.nombre || prev.nombre,
+        email: user.email || prev.email
+      }));
+      loadSavedAddress();
+    }
+  }, [user, loadSavedAddress]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleCardChange = (e) => {
+    setCardForm({ ...cardForm, [e.target.name]: e.target.value });
+  };
+
   const validateForm = () => {
-    if (!form.nombre.trim() || !form.email.trim() || !form.calle_numero.trim() ||
-        !form.colonia.trim() || !form.ciudad.trim() || !form.codigo_postal.trim() ||
-        !form.telefono_contacto.trim()) {
-      showToast('Por favor completa todos los campos de contacto y dirección de envío.', 'error');
+    if (!form.nombre || !form.email || !form.calle_numero || !form.ciudad || !form.codigo_postal) {
+      showToast('Por favor completa todos los campos de envío obligatorios.', 'error');
       return false;
     }
     return true;
   };
 
-  // Save address to DB after successful order
   const saveAddressToDB = async () => {
-    if (!user?.id_usuario) return;
+    if (!user) return;
     try {
       await fetchWithAuth('/api/address', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          calle_numero: form.calle_numero,
-          colonia: form.colonia,
-          ciudad: form.ciudad,
-          codigo_postal: form.codigo_postal,
-          telefono_contacto: form.telefono_contacto,
-        })
+        body: JSON.stringify(form)
       });
-    } catch {}
-  };
-
-  // Direct PayPal Sandbox Simulation Fallback
-  const handleDirectPayPalSimulate = async () => {
-    if (!validateForm()) return;
-    setLoading(true);
-    try {
-      const finalTotal = totalPrice + (totalPrice >= 100 ? 0 : 12);
-      // Create mock order directly
-      const res = await fetchWithAuth('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_usuario: user?.id_usuario || null,
-          total: finalTotal,
-          metodo_pago: 'PayPal (Sandbox Simulado)',
-          items: items.map(item => ({
-            id_producto: item.id_producto,
-            cantidad: item.cantidad,
-            precio: item.precio
-          })),
-          direccion: form
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        await saveAddressToDB();
-        setSuccess(true);
-        setOrderId(data.id_pedido);
-        showToast('¡Pago procesado con éxito mediante PayPal Sandbox!', 'success');
-        clearCart();
-      } else {
-        showToast(data.error || 'No se pudo procesar el pago de PayPal.', 'error');
-      }
     } catch (e) {
-      console.error('PayPal simulation error:', e);
-      showToast('Error de red al procesar el pago con PayPal.', 'error');
+      console.error('Error saving address:', e);
     }
-    setLoading(false);
   };
 
-  const handleStandardSubmit = async (e) => {
-    e.preventDefault();
+  const handleDirectOrder = async (metodo) => {
     if (!validateForm()) return;
-
     setLoading(true);
     try {
-      const finalTotal = totalPrice + (totalPrice >= 100 ? 0 : 12);
       const res = await fetchWithAuth('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id_usuario: user?.id_usuario || null,
           total: finalTotal,
-          metodo_pago: 'Tarjeta de crédito (Simulado)',
+          metodo_pago: metodo,
           items: items.map(item => ({
             id_producto: item.id_producto,
             cantidad: item.cantidad,
@@ -146,6 +121,7 @@ export default function CheckoutPage() {
           direccion: form
         })
       });
+
       const data = await res.json();
       if (data.success) {
         await saveAddressToDB();
@@ -175,7 +151,7 @@ export default function CheckoutPage() {
           </div>
           <h1 className="checkout-success-title">¡Orden Confirmada!</h1>
           <p className="checkout-success-text">Gracias por tu compra. Tu número de pedido es:</p>
-          <div className="checkout-success-id-box">{orderId}</div>
+          <div className="checkout-success-id-box">#{orderId}</div>
           <p className="checkout-success-subtext">Hemos recibido tu pago y estamos preparando tus objetos curados.</p>
           <button onClick={() => router.push('/shop')} className="btn-primary" style={{ marginTop: '24px' }}>
             CONTINUAR COMPRANDO
@@ -200,6 +176,7 @@ export default function CheckoutPage() {
   }
 
   const finalTotal = totalPrice + (totalPrice >= 100 ? 0 : 12);
+  const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test';
 
   return (
     <PayPalScriptProvider options={{ "clientId": paypalClientId, currency: "USD", intent: "capture" }}>
@@ -248,18 +225,17 @@ export default function CheckoutPage() {
 
             {/* Shipping Address */}
             <div className="checkout-card">
-              <h2 className="checkout-section-title">
-                <span className="step-number">2</span>
-                <span>Dirección de Envío</span>
-                {savedAddressLoaded && (
-                  <span className="checkout-saved-badge">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    Guardada
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h2 className="checkout-section-title" style={{ margin: 0 }}>
+                  <span className="step-number">2</span>
+                  <span>Dirección de Envío</span>
+                </h2>
+                {addressLoaded && (
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: '#2E7D32', backgroundColor: '#E8F5E9', padding: '4px 10px', borderRadius: '12px', fontWeight: 'bold' }}>
+                    ✓ Cargar de BD
                   </span>
                 )}
-              </h2>
+              </div>
               <div className="checkout-form-group">
                 <label className="checkout-label" htmlFor="calle_numero">Calle y Número</label>
                 <input
@@ -267,7 +243,7 @@ export default function CheckoutPage() {
                   type="text"
                   id="calle_numero"
                   name="calle_numero"
-                  placeholder="Av. Principal #123"
+                  placeholder="Av. Paseo de la Reforma 402, Int. 5B"
                   value={form.calle_numero}
                   onChange={handleChange}
                   required
@@ -275,20 +251,19 @@ export default function CheckoutPage() {
               </div>
               <div className="checkout-form-row">
                 <div className="checkout-form-group">
-                  <label className="checkout-label" htmlFor="colonia">Colonia / Municipio</label>
+                  <label className="checkout-label" htmlFor="colonia">Colonia / Barrio</label>
                   <input
                     className="checkout-input"
                     type="text"
                     id="colonia"
                     name="colonia"
-                    placeholder="Col. Centro"
+                    placeholder="Juárez"
                     value={form.colonia}
                     onChange={handleChange}
-                    required
                   />
                 </div>
                 <div className="checkout-form-group">
-                  <label className="checkout-label" htmlFor="ciudad">Ciudad / Estado</label>
+                  <label className="checkout-label" htmlFor="ciudad">Ciudad / Municipio</label>
                   <input
                     className="checkout-input"
                     type="text"
@@ -309,7 +284,7 @@ export default function CheckoutPage() {
                     type="text"
                     id="codigo_postal"
                     name="codigo_postal"
-                    placeholder="01000"
+                    placeholder="06600"
                     value={form.codigo_postal}
                     onChange={handleChange}
                     required
@@ -358,7 +333,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="payment-method-info">
                     <span className="payment-method-title">PayPal / Sandbox</span>
-                    <span className="payment-method-desc">Paga seguro con tu cuenta de PayPal Sandbox</span>
+                    <span className="payment-method-desc">Pago seguro con botones inteligentes o simulación</span>
                   </div>
                 </label>
 
@@ -389,18 +364,21 @@ export default function CheckoutPage() {
 
               {metodoPago === 'paypal' ? (
                 <div className="paypal-checkout-container">
-                  <div className="paypal-sandbox-info">
-                    <div className="paypal-sandbox-info-title">
+                  <div className="paypal-sandbox-info" style={{ backgroundColor: '#FFFDE7', border: '1px solid #FFE082', borderRadius: '8px', padding: '14px', marginBottom: '16px' }}>
+                    <div className="paypal-sandbox-info-title" style={{ fontWeight: 'bold', color: '#F57F17', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10" />
                         <line x1="12" y1="16" x2="12" y2="12" />
                         <line x1="12" y1="8" x2="12.01" y2="8" />
                       </svg>
-                      Credenciales de Prueba PayPal Sandbox
+                      Instrucciones de Prueba PayPal Sandbox
                     </div>
-                    <div className="paypal-credentials-row">
-                      <span><strong>Email:</strong> sb-eep1652409955@business.example.com</span>
-                      <span><strong>Password:</strong> $v/G-3$N</span>
+                    <p style={{ fontSize: '0.8rem', color: '#5D4037', margin: '6px 0' }}>
+                      ⚠️ <strong>Nota:</strong> Para pagar en el popup de PayPal, usa una cuenta de <strong>Comprador (Personal)</strong>. No uses la del vendedor (`@business`). O presiona el botón verde de aprobación directa abajo.
+                    </p>
+                    <div className="paypal-credentials-row" style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: '#3E2723' }}>
+                      <span><strong>Cuenta Comprador Test:</strong> sb-buyer-nexa@personal.example.com</span>
+                      <span><strong>Password:</strong> nexa1234</span>
                     </div>
                   </div>
 
@@ -444,111 +422,164 @@ export default function CheckoutPage() {
                           });
                           const resData = await res.json();
                           if (resData.success) {
+                            await saveAddressToDB();
                             setSuccess(true);
                             setOrderId(resData.id_pedido);
                             showToast('¡Pago procesado con éxito en PayPal!', 'success');
                             clearCart();
                           } else {
-                            showToast(resData.error || 'No se pudo completar la transacción.', 'error');
+                            showToast(resData.error || 'Error al capturar orden.', 'error');
                           }
-                        } catch (err) {
-                          console.error('Error al capturar orden PayPal:', err);
-                          showToast('Error de red al procesar la transacción.', 'error');
-                        } finally {
-                          setLoading(false);
+                        } catch (e) {
+                          console.error('PayPal approve error:', e);
+                          showToast('Error de red al capturar pago PayPal.', 'error');
                         }
+                        setLoading(false);
                       }}
                       onError={(err) => {
-                        console.error('PayPal button error:', err);
-                        showToast('Ocurrió un error al cargar el servicio de PayPal.', 'error');
+                        console.error('PayPal Button Error:', err);
+                        showToast('Ocurrió un aviso en PayPal Sandbox.', 'error');
                       }}
                     />
 
-                    <div className="paypal-fallback-divider">
-                      <span>O SIMULA EL PAGO EN 1 CLIC</span>
-                    </div>
-
+                    {/* Botón de respaldo 1-clic Sandbox */}
                     <button
                       type="button"
-                      onClick={handleDirectPayPalSimulate}
-                      className="paypal-express-simulate-btn"
+                      onClick={() => handleDirectOrder('PayPal (Sandbox Directo)')}
                       disabled={loading}
+                      style={{
+                        width: '100%',
+                        marginTop: '12px',
+                        padding: '12px',
+                        backgroundColor: '#107C41',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontWeight: '700',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="#003087">
-                        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.761.761 0 0 1 .752-.644h6.868c3.2 0 5.488.672 6.444 2.378.835 1.488.647 3.576-.554 6.136-1.572 3.353-4.636 4.97-8.83 4.97H7.791l-.715 4.777z"/>
-                      </svg>
-                      {loading ? 'PROCESANDO PAGO PAYPAL...' : 'PAGAR AHORA CON PAYPAL SANDBOX (SIMULAR)'}
+                      ⚡ SIMULAR PAGO PAYPAL SANDBOX (Aprobación 1-Clic)
                     </button>
                   </div>
                 </div>
               ) : (
-                <form onSubmit={handleStandardSubmit}>
+                <div className="card-checkout-container" style={{ marginTop: '16px' }}>
+                  <div className="checkout-form-group">
+                    <label className="checkout-label">Nombre en la Tarjeta</label>
+                    <input
+                      className="checkout-input"
+                      type="text"
+                      name="titular"
+                      placeholder="Axel Isaac"
+                      value={cardForm.titular}
+                      onChange={handleCardChange}
+                      required
+                    />
+                  </div>
+                  <div className="checkout-form-group" style={{ marginTop: '12px' }}>
+                    <label className="checkout-label">Número de Tarjeta (Simulación)</label>
+                    <input
+                      className="checkout-input"
+                      type="text"
+                      name="numero"
+                      placeholder="4000 1234 5678 9010"
+                      maxLength={19}
+                      value={cardForm.numero}
+                      onChange={handleCardChange}
+                      required
+                    />
+                  </div>
+                  <div className="checkout-form-row" style={{ marginTop: '12px' }}>
+                    <div className="checkout-form-group">
+                      <label className="checkout-label">Vencimiento</label>
+                      <input
+                        className="checkout-input"
+                        type="text"
+                        name="expiracion"
+                        placeholder="12/28"
+                        maxLength={5}
+                        value={cardForm.expiracion}
+                        onChange={handleCardChange}
+                        required
+                      />
+                    </div>
+                    <div className="checkout-form-group">
+                      <label className="checkout-label">CVV</label>
+                      <input
+                        className="checkout-input"
+                        type="password"
+                        name="cvv"
+                        placeholder="123"
+                        maxLength={4}
+                        value={cardForm.cvv}
+                        onChange={handleCardChange}
+                        required
+                      />
+                    </div>
+                  </div>
                   <button
-                    type="submit"
-                    className="checkout-submit-btn"
+                    type="button"
+                    onClick={() => handleDirectOrder('Tarjeta de Crédito')}
                     disabled={loading}
-                    id="place-order-btn"
-                    style={{ marginTop: '16px', width: '100%' }}
+                    className="auth-btn"
+                    style={{ marginTop: '20px', width: '100%' }}
                   >
-                    {loading ? 'PROCESANDO...' : 'REALIZAR PEDIDO CON TARJETA'}
+                    {loading ? 'PROCESANDO PAGO...' : `PAGAR $${finalTotal.toFixed(2)} CON TARJETA`}
                   </button>
-                </form>
+                </div>
               )}
             </div>
 
           </div>
 
-          {/* Order Summary Sidebar Card */}
-          <div className="checkout-summary-card" id="checkout-summary">
-            <h3 className="checkout-summary-title">Resumen del Pedido</h3>
-            <div className="checkout-summary-items">
-              {items.map((item) => (
-                <div className="checkout-summary-item" key={item.id_producto}>
-                  <div className="checkout-summary-item-thumb">
-                    <Image
-                      src={item.url_imagen || '/images/products/travertine_tray.png'}
-                      alt={item.nombre}
-                      width={64}
-                      height={64}
-                      className="checkout-summary-item-image"
-                    />
-                    <span className="item-qty-badge">{item.cantidad}</span>
+          {/* Order Summary Right Panel */}
+          <div className="checkout-summary-container">
+            <div className="checkout-card checkout-summary-card">
+              <h3 className="checkout-summary-title">Resumen del Pedido</h3>
+              
+              <div className="checkout-summary-items">
+                {items.map((item) => (
+                  <div key={item.id_producto} className="checkout-summary-item">
+                    <div className="checkout-summary-item-info">
+                      <span className="checkout-summary-item-title">{item.nombre}</span>
+                      <span className="checkout-summary-item-qty">Cantidad: {item.cantidad}</span>
+                    </div>
+                    <span className="checkout-summary-item-price">${(item.precio * item.cantidad).toFixed(2)}</span>
                   </div>
-                  <div className="checkout-summary-item-info">
-                    <span className="checkout-summary-item-name">{item.nombre}</span>
-                    <span className="checkout-summary-item-qty">Cantidad: {item.cantidad}</span>
-                  </div>
-                  <span className="checkout-summary-item-price">${(item.precio * item.cantidad).toFixed(2)}</span>
+                ))}
+              </div>
+
+              <div className="checkout-summary-totals">
+                <div className="summary-row">
+                  <span>Subtotal</span>
+                  <span>${totalPrice.toFixed(2)}</span>
                 </div>
-              ))}
-            </div>
-
-            <div className="checkout-summary-divider" />
-
-            <div className="checkout-summary-totals">
-              <div className="checkout-summary-row">
-                <span>Subtotal</span>
-                <span>${totalPrice.toFixed(2)}</span>
+                <div className="summary-row">
+                  <span>Envío</span>
+                  <span>{totalPrice >= 100 ? 'GRATIS' : '$12.00'}</span>
+                </div>
+                <div className="summary-row total-row">
+                  <span>Total</span>
+                  <span>${finalTotal.toFixed(2)}</span>
+                </div>
               </div>
-              <div className="checkout-summary-row">
-                <span>Envío estimado</span>
-                <span>{totalPrice >= 100 ? 'Gratis' : '$12.00'}</span>
-              </div>
-              <div className="checkout-summary-divider" />
-              <div className="checkout-summary-row checkout-summary-total">
-                <span>Total a pagar</span>
-                <span className="total-amount-highlight">${finalTotal.toFixed(2)}</span>
-              </div>
-            </div>
 
-            <div className="checkout-security-notice">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" strokeWidth="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-              <span>Pago 100% Encriptado y Seguro</span>
+              <div className="checkout-security-notice">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <span>Pago 100% Encriptado y Seguro</span>
+              </div>
             </div>
           </div>
+
         </div>
       </div>
     </PayPalScriptProvider>
