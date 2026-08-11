@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 
 export default function CheckoutPage() {
-  const { cart, totalPrice, clearCart } = useCart();
+  const { cart, totalPrice, clearCart, mounted, closeDrawer } = useCart();
   const { user, fetchWithAuth } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
@@ -18,6 +18,11 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState(null);
   const [metodoPago, setMetodoPago] = useState('paypal'); // 'paypal' | 'card'
   const [addressLoaded, setAddressLoaded] = useState(false);
+
+  // Close CartDrawer automatically when navigating to Checkout
+  useEffect(() => {
+    closeDrawer();
+  }, [closeDrawer]);
 
   const items = cart || [];
 
@@ -157,6 +162,14 @@ export default function CheckoutPage() {
             CONTINUAR COMPRANDO
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (!mounted) {
+    return (
+      <div className="container section-padding text-center">
+        <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', padding: '60px 0' }}>Cargando tu carrito...</p>
       </div>
     );
   }
