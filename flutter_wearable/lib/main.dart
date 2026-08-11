@@ -28,7 +28,157 @@ class NexaWearApp extends StatelessWidget {
           surface: Color(0xFF1E1E1E),
         ),
       ),
-      home: const WatchQrLoginScreen(),  // Pantalla inicial: QR de acceso
+      home: const NexaSplashScreen(),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// SPLASH SCREEN: Pantalla de Carga Oficial con el Logo de Nexa
+// ────────────────────────────────────────────────────────────────────────────
+class NexaSplashScreen extends StatefulWidget {
+  const NexaSplashScreen({super.key});
+
+  @override
+  State<NexaSplashScreen> createState() => _NexaSplashScreenState();
+}
+
+class _NexaSplashScreenState extends State<NexaSplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+
+    _controller.forward();
+
+    Timer(const Duration(milliseconds: 2200), () {
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => const WatchQrLoginScreen(),
+            transitionsBuilder: (_, anim, __, child) => FadeTransition(opacity: anim, child: child),
+            transitionDuration: const Duration(milliseconds: 600),
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F0E0D),
+      body: Center(
+        child: Container(
+          width: size.width,
+          height: size.height,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [Color(0xFF26201B), Color(0xFF0F0E0D)],
+              radius: 0.85,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ScaleTransition(
+                scale: _scaleAnimation,
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Outer Golden Ring
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFFC85A2A).withOpacity(0.4), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFC85A2A).withOpacity(0.25),
+                              blurRadius: 16,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Inner Emblem Icon
+                      Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF1E1C1A),
+                          border: Border.all(color: const Color(0xFFB8860B), width: 1),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.diamond_outlined,
+                          color: Color(0xFFC85A2A),
+                          size: 26,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: Column(
+                  children: [
+                    const Text(
+                      'N E X A',
+                      style: TextStyle(
+                        fontFamily: 'serif',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 4,
+                        color: Color(0xFFF5F0EB),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'WEAR OS EDITION',
+                      style: TextStyle(
+                        fontSize: 6.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.8,
+                        color: const Color(0xFFB8860B).withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
