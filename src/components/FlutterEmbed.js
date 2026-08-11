@@ -5,7 +5,6 @@ export default function FlutterEmbed() {
   const [screen, setScreen] = useState('qr'); // 'qr' | 'pin' | 'home'
   const [token, setToken] = useState('NEXA-88A');
   const [enteredPin, setEnteredPin] = useState('');
-  const [pinError, setPinError] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Generate random QR token
@@ -32,9 +31,8 @@ export default function FlutterEmbed() {
     setEnteredPin(prev => prev.slice(0, -1));
   };
 
-  const verifyPin = async (pin) => {
+  const verifyPin = async () => {
     setLoading(true);
-    setPinError('');
     setTimeout(() => {
       setLoading(false);
       setScreen('home');
@@ -56,11 +54,11 @@ export default function FlutterEmbed() {
         </span>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }}>
         {/* Watch Device Chassis */}
         <div style={{
-          width: '260px',
-          height: '260px',
+          width: '270px',
+          height: '270px',
           borderRadius: '50%',
           border: '12px solid #282420',
           boxShadow: '0 0 0 3px #151311, 0 15px 40px rgba(0,0,0,0.8), inset 0 0 12px rgba(0,0,0,0.8)',
@@ -70,7 +68,7 @@ export default function FlutterEmbed() {
           flexDirection: 'column',
           alignItems: 'center',
           justify: 'center',
-          padding: '24px',
+          padding: '12px',
           overflow: 'hidden',
           color: '#F5F0EB',
           userSelect: 'none'
@@ -79,16 +77,16 @@ export default function FlutterEmbed() {
           {/* SCREEN 1: QR CODE */}
           {screen === 'qr' && (
             <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.6rem', letterSpacing: '2px', fontWeight: '900', color: '#F5F0EB' }}>N E X A</span>
-              <span style={{ fontSize: '0.5rem', letterSpacing: '1px', color: '#B8860B', marginBottom: '8px' }}>ESCANEAR QR / CÓDIGO</span>
+              <span style={{ fontSize: '0.65rem', letterSpacing: '2px', fontWeight: '900', color: '#F5F0EB' }}>N E X A</span>
+              <span style={{ fontSize: '0.55rem', letterSpacing: '1px', color: '#B8860B', marginBottom: '8px' }}>ESCANEAR QR / CÓDIGO</span>
 
               {/* QR Box Visual */}
               <div 
                 onClick={() => setScreen('pin')}
                 title="Haz clic para simular que escaneaste desde la web"
                 style={{
-                  width: '90px',
-                  height: '90px',
+                  width: '94px',
+                  height: '94px',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '10px',
                   padding: '6px',
@@ -100,33 +98,33 @@ export default function FlutterEmbed() {
                   transition: 'transform 0.2s'
                 }}
               >
-                {/* SVG QR Code Simulation */}
-                <svg width="78" height="78" viewBox="0 0 24 24" fill="#000">
+                <svg width="82" height="82" viewBox="0 0 24 24" fill="#000">
                   <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm9-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm11-2h2v2h-2v-2zm4 0h2v4h-4v-2h2v-2zm-6 4h4v2h-4v-2zm4 2h4v2h-4v-2zm-4 2h2v2h-2v-2z"/>
                 </svg>
               </div>
 
-              <div style={{ marginTop: '8px', fontSize: '0.75rem', fontFamily: 'monospace', fontWeight: '700', color: '#C85A2A' }}>
+              <div style={{ marginTop: '8px', fontSize: '0.8rem', fontFamily: 'monospace', fontWeight: '700', color: '#C85A2A' }}>
                 {token}
               </div>
               <span style={{ fontSize: '0.55rem', color: 'rgba(245,240,235,0.6)', marginTop: '2px' }}>
-                Toca el QR al simular confirmación ➔
+                Toca el QR para continuar ➔
               </span>
             </div>
           )}
 
           {/* SCREEN 2: PIN VERIFY */}
           {screen === 'pin' && (
-            <div style={{ textAlign: 'center', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.55rem', letterSpacing: '1.5px', color: '#B8860B', fontWeight: '700' }}>INGRESA TU PIN</span>
-              <span style={{ fontSize: '0.5rem', color: 'rgba(245,240,235,0.6)', marginBottom: '6px' }}>PIN de tu registro web</span>
+            <div style={{ textAlign: 'center', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 8px' }}>
+              <span style={{ fontSize: '0.6rem', letterSpacing: '1px', color: '#B8860B', fontWeight: '700', marginBottom: '2px' }}>
+                INGRESA TU PIN
+              </span>
 
               {/* Dots */}
-              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '8px' }}>
                 {[0,1,2,3].map(i => (
                   <div key={i} style={{
-                    width: '8px',
-                    height: '8px',
+                    width: '9px',
+                    height: '9px',
                     borderRadius: '50%',
                     backgroundColor: enteredPin.length > i ? '#C85A2A' : '#3A342E',
                     border: '1px solid #C85A2A'
@@ -135,10 +133,10 @@ export default function FlutterEmbed() {
               </div>
 
               {loading ? (
-                <span style={{ fontSize: '0.6rem', color: '#B8860B' }}>Verificando...</span>
+                <span style={{ fontSize: '0.65rem', color: '#B8860B', margin: '20px 0' }}>Verificando PIN...</span>
               ) : (
-                /* Keypad 3x3 */
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 36px)', gap: '4px', justifyContent: 'center' }}>
+                /* Keypad 3x4 Full Grid */
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 44px)', gap: '4px', justifyContent: 'center' }}>
                   {['1','2','3','4','5','6','7','8','9','C','0','←'].map((k, idx) => (
                     <button
                       key={idx}
@@ -148,15 +146,18 @@ export default function FlutterEmbed() {
                         else handleNumClick(k);
                       }}
                       style={{
-                        width: '36px',
-                        height: '24px',
-                        borderRadius: '4px',
-                        border: '0.5px solid #3E332A',
+                        width: '44px',
+                        height: '28px',
+                        borderRadius: '6px',
+                        border: '1px solid #3E332A',
                         backgroundColor: '#26201B',
-                        color: k === '←' ? '#C85A2A' : '#FFF',
-                        fontSize: '0.65rem',
+                        color: k === '←' ? '#C85A2A' : k === 'C' ? '#AAA' : '#FFF',
+                        fontSize: '0.75rem',
                         fontWeight: 'bold',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                       }}
                     >
                       {k}
@@ -170,23 +171,23 @@ export default function FlutterEmbed() {
           {/* SCREEN 3: HOME WATCH */}
           {screen === 'home' && (
             <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(46,125,50,0.2)', color: '#81C784', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '6px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(46,125,50,0.2)', color: '#81C784', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px', fontSize: '1rem', fontWeight: 'bold' }}>
                 ✓
               </div>
-              <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#F5F0EB' }}>¡Conectado a Nexa!</span>
-              <span style={{ fontSize: '0.55rem', color: 'rgba(245,240,235,0.7)', marginTop: '4px', maxWidth: '160px' }}>
-                Reloj sincronizado con el carrito de tu cuenta
+              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#F5F0EB' }}>¡PIN Confirmado!</span>
+              <span style={{ fontSize: '0.65rem', color: 'rgba(245,240,235,0.7)', marginTop: '4px', maxWidth: '170px' }}>
+                Smartwatch vinculado a tu cuenta Nexa
               </span>
               <button
-                onClick={() => setScreen('qr')}
+                onClick={() => { setScreen('qr'); setEnteredPin(''); }}
                 style={{
-                  marginTop: '12px',
+                  marginTop: '14px',
                   backgroundColor: '#C85A2A',
                   border: 'none',
                   borderRadius: '12px',
                   color: '#FFF',
-                  fontSize: '0.6rem',
-                  padding: '4px 10px',
+                  fontSize: '0.65rem',
+                  padding: '5px 12px',
                   cursor: 'pointer',
                   fontWeight: 'bold'
                 }}

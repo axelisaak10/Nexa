@@ -646,7 +646,7 @@ class _WatchPinVerifyScreenState extends State<WatchPinVerifyScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: GridView.count(
                     crossAxisCount: 3,
-                    childAspectRatio: 1.35,
+                    childAspectRatio: 1.5,
                     mainAxisSpacing: 3,
                     crossAxisSpacing: 4,
                     physics: const NeverScrollableScrollPhysics(),
