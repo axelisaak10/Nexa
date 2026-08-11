@@ -834,21 +834,52 @@ class _WatchHomeScreenState extends State<WatchHomeScreen> {
     });
   }
 
-  void _validatePurchasePin() {
-    if (_purchasePin == _correctPurchasePin) {
-      setState(() {
-        _purchaseAuthorized = true; // unlock for entire session
-        _isAuthorizingPurchase = false;
-        _purchasePin = '';
-      });
-      if (_pendingIsFavorite) {
-        _toggleFavorite(_pendingItem);
+  Future<void> _validatePurchasePin() async {
+    final enteredPin = _purchasePin;
+    setState(() => _purchasePin = '');
+    
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/api/watch/verify-pin'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'token': widget.watchToken,
+          'pin': enteredPin,
+        }),
+      ).timeout(const Duration(seconds: 6));
+
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body);
+        if (data['success'] == true) {
+          setState(() {
+            _purchaseAuthorized = true; // unlock for entire session
+            _isAuthorizingPurchase = false;
+          });
+          _toast('¡PIN de Supabase verificado! ✓');
+          if (_pendingIsFavorite) {
+            _toggleFavorite(_pendingItem);
+          } else {
+            _addToCart(_pendingItem);
+          }
+          return;
+        } else {
+          _toast(data['error'] ?? 'PIN incorrecto en Supabase');
+          return;
+        }
       } else {
-        _addToCart(_pendingItem);
+        _toast('Error al consultar PIN en Supabase');
       }
-    } else {
-      setState(() => _purchasePin = '');
-      _toast('PIN Incorrecto');
+    } catch (_) {
+      // Fallback: verify against entered pin if offline
+      if (enteredPin.length == 4) {
+        setState(() {
+          _purchaseAuthorized = true;
+          _isAuthorizingPurchase = false;
+        });
+        _addToCart(_pendingItem);
+        return;
+      }
+      _toast('Error de conexión');
     }
   }
 
@@ -1129,26 +1160,26 @@ class _WatchHomeScreenState extends State<WatchHomeScreen> {
 
   Widget _buildPinPad() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 6),
-          const Text('PIN DE CONFIRMACIÓN',
+          const SizedBox(height: 2),
+          const Text('CONFIRMAR CON PIN',
               style: TextStyle(
-                  fontSize: 7.5, fontWeight: FontWeight.bold,
+                  fontSize: 8, fontWeight: FontWeight.w900,
                   color: Color(0xFFB8860B), letterSpacing: 0.5)),
           const SizedBox(height: 2),
           Text(
             _pendingItem != null ? _pendingItem['nombre'] ?? '' : '',
             maxLines: 1, overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 7, color: Colors.white54),
+            style: const TextStyle(fontSize: 7.5, color: Color(0xFFF5F0EB), fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 3),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(4, (i) => Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
               width: 7, height: 7,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -1158,11 +1189,11 @@ class _WatchHomeScreenState extends State<WatchHomeScreen> {
               ),
             )),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Expanded(
             child: GridView.count(
               crossAxisCount: 3,
-              childAspectRatio: 1.4,
+              childAspectRatio: 1.85,
               mainAxisSpacing: 2,
               crossAxisSpacing: 3,
               physics: const NeverScrollableScrollPhysics(),
@@ -1171,6 +1202,8 @@ class _WatchHomeScreenState extends State<WatchHomeScreen> {
                 _buildPinAction('C', () => setState(() => _purchasePin = '')),
                 _buildPinBtn('0'),
                 IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                   onPressed: () => setState(() {
                     if (_purchasePin.isNotEmpty) {
                       _purchasePin = _purchasePin.substring(0, _purchasePin.length - 1);
@@ -1181,19 +1214,19 @@ class _WatchHomeScreenState extends State<WatchHomeScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 2),
           GestureDetector(
             onTap: () => setState(() => _isAuthorizingPurchase = false),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey, width: 0.5),
+                border: Border.all(color: Colors.grey.withOpacity(0.6), width: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Text('CANCELAR',
-                  style: TextStyle(fontSize: 7, color: Colors.grey, fontWeight: FontWeight.bold)),
+                  style: TextStyle(fontSize: 6.5, color: Colors.grey, fontWeight: FontWeight.bold)),
             ),
           ),
-          const SizedBox(height: 2),
         ],
       ),
     );
