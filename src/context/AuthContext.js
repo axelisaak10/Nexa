@@ -1,31 +1,43 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
+function getCookie(name) {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    if (typeof window !== 'undefined') {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Restore user session from cookie on mount
+  useEffect(() => {
+    const savedToken = getCookie('nexa-token');
+    if (savedToken) {
+      setToken(savedToken);
       try {
-        const savedUser = localStorage.getItem('nexa-user');
-        return savedUser ? JSON.parse(savedUser) : null;
+        // Decode base64 JWT payload safely
+        const payload = JSON.parse(atob(savedToken.split('.')[1]));
+        if (payload && payload.exp * 1000 > Date.now()) {
+          setUser({
+            id_usuario: payload.id_usuario,
+            nombre: payload.nombre,
+            email: payload.email,
+            id_rol: payload.id_rol,
+            is_enabled: payload.is_enabled
+          });
+        }
       } catch (e) {
-        console.error('Failed to parse saved user:', e);
-        return null;
+        console.error('Failed to parse JWT cookie:', e);
       }
     }
-    return null;
-  });
-
-  const [token, setToken] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('nexa-token') || null;
-    }
-    return null;
-  });
-
-  const [loading] = useState(false);
+    setLoading(false);
+  }, []);
 
   const login = useCallback(async (email, password) => {
     try {
@@ -38,8 +50,6 @@ export function AuthProvider({ children }) {
       if (data.success) {
         setUser(data.user);
         setToken(data.token);
-        localStorage.setItem('nexa-user', JSON.stringify(data.user));
-        localStorage.setItem('nexa-token', data.token);
         document.cookie = `nexa-token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
         return { success: true, user: data.user, has_pin: data.has_pin };
       }
@@ -60,8 +70,6 @@ export function AuthProvider({ children }) {
       if (data.success) {
         setUser(data.user);
         setToken(data.token);
-        localStorage.setItem('nexa-user', JSON.stringify(data.user));
-        localStorage.setItem('nexa-token', data.token);
         document.cookie = `nexa-token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
         return { success: true, user: data.user };
       }
@@ -74,19 +82,17 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('nexa-user');
-    localStorage.removeItem('nexa-token');
     document.cookie = 'nexa-token=; path=/; max-age=0; SameSite=Lax';
   }, []);
 
   // Expose fetch wrapper that auto-injects bearer token for backend requests
   const fetchWithAuth = useCallback(async (url, options = {}) => {
-    const savedToken = localStorage.getItem('nexa-token') || token;
+    const activeToken = token || getCookie('nexa-token');
     const headers = {
       ...options.headers,
     };
-    if (savedToken) {
-      headers['Authorization'] = `Bearer ${savedToken}`;
+    if (activeToken) {
+      headers['Authorization'] = `Bearer ${activeToken}`;
     }
     return fetch(url, { ...options, headers });
   }, [token]);
@@ -105,5 +111,3 @@ export function useAuth() {
   }
   return context;
 }
-
-

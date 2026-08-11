@@ -42,14 +42,7 @@ function WatchPairingInner() {
   };
 
   useEffect(() => {
-    // Comprobar si hay un usuario guardado en localStorage directamente por resguardo
     let currentUser = user;
-    if (!currentUser && typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('nexa-user');
-        if (saved) currentUser = JSON.parse(saved);
-      } catch (_) {}
-    }
 
     const timer = setTimeout(() => {
       if (!token) {
