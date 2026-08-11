@@ -40,7 +40,8 @@ export function AuthProvider({ children }) {
         setToken(data.token);
         localStorage.setItem('nexa-user', JSON.stringify(data.user));
         localStorage.setItem('nexa-token', data.token);
-        return { success: true, user: data.user };
+        document.cookie = `nexa-token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
+        return { success: true, user: data.user, has_pin: data.has_pin };
       }
       return { success: false, error: data.error || 'Error al iniciar sesión' };
     } catch (e) {
@@ -61,6 +62,7 @@ export function AuthProvider({ children }) {
         setToken(data.token);
         localStorage.setItem('nexa-user', JSON.stringify(data.user));
         localStorage.setItem('nexa-token', data.token);
+        document.cookie = `nexa-token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
         return { success: true, user: data.user };
       }
       return { success: false, error: data.error || 'Error al registrar usuario' };
@@ -74,6 +76,7 @@ export function AuthProvider({ children }) {
     setToken(null);
     localStorage.removeItem('nexa-user');
     localStorage.removeItem('nexa-token');
+    document.cookie = 'nexa-token=; path=/; max-age=0; SameSite=Lax';
   }, []);
 
   // Expose fetch wrapper that auto-injects bearer token for backend requests

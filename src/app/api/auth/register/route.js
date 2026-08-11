@@ -16,7 +16,8 @@ export async function POST(request) {
         id_usuario: result.user.id_usuario,
         nombre: result.user.nombre,
         email: result.user.email,
-        id_rol: result.user.id_rol
+        id_rol: result.user.id_rol,
+        is_enabled: true
       });
       return NextResponse.json({ success: true, user: result.user, token });
     }

@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import DashboardCharts from '@/components/DashboardCharts';
+import VersionWidget from '@/components/VersionWidget';
+import FlutterEmbed from '@/components/FlutterEmbed';
 
 export default function DashboardPage() {
   const { user, fetchWithAuth } = useAuth();
@@ -30,6 +32,11 @@ export default function DashboardPage() {
     url_imagen: '/images/products/travertine_tray.png',
     badge: 'NUEVO'
   });
+
+  // Modal para crear usuario
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({ nombre: '', email: '', password: '', id_rol: 2 });
+  const [createUserLoading, setCreateUserLoading] = useState(false);
 
   const isAdmin = user && (user.id_rol === 1 || user.email === 'admin@nexa.com');
 
@@ -202,6 +209,52 @@ export default function DashboardPage() {
     }
   };
 
+  // Toggle is_enabled Handler
+  const handleToggleUserStatus = async (id_usuario, currentStatus) => {
+    const newStatus = !currentStatus;
+    try {
+      const res = await fetchWithAuth('/api/admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_usuario, is_enabled: newStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(newStatus ? 'Cuenta habilitada' : 'Cuenta deshabilitada', 'success');
+        setUsers(prev => prev.map(u => u.id_usuario === id_usuario ? { ...u, is_enabled: newStatus } : u));
+      } else {
+        showToast('Error al cambiar estado', 'error');
+      }
+    } catch (e) {
+      showToast('Error al cambiar estado', 'error');
+    }
+  };
+
+  // Create User Handler
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    setCreateUserLoading(true);
+    try {
+      const res = await fetchWithAuth('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createUserForm)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('¡Usuario creado exitosamente!', 'success');
+        setShowCreateUserModal(false);
+        setCreateUserForm({ nombre: '', email: '', password: '', id_rol: 2 });
+        fetchDashboardData();
+      } else {
+        showToast(data.error || 'Error al crear usuario', 'error');
+      }
+    } catch (e) {
+      showToast('Error de red', 'error');
+    }
+    setCreateUserLoading(false);
+  };
+
   const totalVentas = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
   return (
@@ -230,7 +283,8 @@ export default function DashboardPage() {
           { id: 'metricas', label: '📊 MÉTRICAS & RESUMEN' },
           { id: 'productos', label: `📦 PRODUCTOS (${products.length})` },
           { id: 'pedidos', label: `🚚 PEDIDOS (${orders.length})` },
-          { id: 'usuarios', label: `👥 USUARIOS (${users.length})` }
+          { id: 'usuarios', label: `👥 USUARIOS (${users.length})` },
+          { id: 'wearable', label: '⌚ WEARABLE' },
         ].map(tab => (
           <button
             key={tab.id}
@@ -293,10 +347,13 @@ export default function DashboardPage() {
               </div>
 
               {/* Gráfico Canvas */}
-              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid var(--border)', borderRadius: '12px', padding: '28px' }}>
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid var(--border)', borderRadius: '12px', padding: '28px', marginBottom: '24px' }}>
                 <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', marginBottom: '20px' }}>Ventas Diarias (Última Semana)</h3>
                 <DashboardCharts metrics={metrics} />
               </div>
+
+              {/* Version Widget */}
+              <VersionWidget />
             </div>
           )}
 
@@ -423,51 +480,83 @@ export default function DashboardPage() {
           {/* TAB 4: GESTIÓN DE USUARIOS */}
           {activeTab === 'usuarios' && (
             <div style={{ backgroundColor: '#FFFFFF', border: '1px solid var(--border)', borderRadius: '12px', padding: '28px' }}>
-              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', marginBottom: '24px' }}>Control de Usuarios y Roles</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem' }}>Control de Usuarios y Roles</h3>
+                <button onClick={() => setShowCreateUserModal(true)} className="btn-primary" style={{ fontSize: '0.75rem' }}>
+                  + CREAR USUARIO
+                </button>
+              </div>
 
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid #E5DCD0', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                      <th style={{ padding: '12px' }}># ID</th>
                       <th style={{ padding: '12px' }}>NOMBRE</th>
-                      <th style={{ padding: '12px' }}>CORREO ELECTRÓNICO</th>
-                      <th style={{ padding: '12px' }}>ROL ACTUAL</th>
-                      <th style={{ padding: '12px', textAlign: 'right' }}>CAMBIAR ROL</th>
+                      <th style={{ padding: '12px' }}>EMAIL</th>
+                      <th style={{ padding: '12px' }}>ROL</th>
+                      <th style={{ padding: '12px' }}>ESTADO</th>
+                      <th style={{ padding: '12px' }}>ÚLTIMO LOGIN</th>
+                      <th style={{ padding: '12px', textAlign: 'right' }}>ACCIONES</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((u) => (
-                      <tr key={u.id_usuario} style={{ borderBottom: '1px solid #F0E8DF' }}>
-                        <td style={{ padding: '16px 12px', fontFamily: 'var(--font-mono)' }}>#{u.id_usuario}</td>
-                        <td style={{ padding: '16px 12px', fontWeight: '600' }}>{u.nombre}</td>
-                        <td style={{ padding: '16px 12px', fontFamily: 'var(--font-mono)' }}>{u.email}</td>
-                        <td style={{ padding: '16px 12px' }}>
-                          <span style={{
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '0.7rem',
-                            padding: '4px 10px',
-                            borderRadius: '12px',
-                            backgroundColor: u.id_rol === 1 ? '#C85A2A' : '#1A1A1A',
-                            color: 'white'
-                          }}>
-                            {u.id_rol === 1 ? 'ADMINISTRADOR' : 'CLIENTE'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '16px 12px', textAlign: 'right' }}>
-                          <button
-                            onClick={() => handleUpdateUserRole(u.id_usuario, u.id_rol === 1 ? 2 : 1)}
-                            className="btn-primary"
-                            style={{ padding: '6px 12px', fontSize: '0.7rem' }}
-                          >
-                            {u.id_rol === 1 ? 'HACER CLIENTE' : 'HACER ADMIN'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {users.map((u) => {
+                      const enabled = u.is_enabled !== false;
+                      return (
+                        <tr key={u.id_usuario} style={{ borderBottom: '1px solid #F0E8DF', opacity: enabled ? 1 : 0.6 }}>
+                          <td style={{ padding: '16px 12px', fontWeight: '600' }}>
+                            {u.nombre}
+                            {u.require_password_change && (
+                              <span style={{ marginLeft: '6px', fontSize: '0.65rem', background: '#FFF3E0', color: '#E65100', padding: '2px 6px', borderRadius: '4px', fontFamily: 'var(--font-mono)' }}>CAMBIAR PWD</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '16px 12px', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>{u.email}</td>
+                          <td style={{ padding: '16px 12px' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', padding: '4px 10px', borderRadius: '12px', backgroundColor: u.id_rol === 1 ? '#C85A2A' : '#1A1A1A', color: 'white' }}>
+                              {u.id_rol === 1 ? 'ADMIN' : 'CLIENTE'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '16px 12px' }}>
+                            <label className="user-status-switch" title={enabled ? 'Deshabilitar cuenta' : 'Habilitar cuenta'}>
+                              <input
+                                type="checkbox"
+                                checked={enabled}
+                                onChange={() => handleToggleUserStatus(u.id_usuario, enabled)}
+                              />
+                              <div className="user-switch-track">
+                                <div className="user-switch-thumb" />
+                              </div>
+                              <span className={`user-status-chip ${enabled ? 'enabled' : 'disabled'}`}>
+                                <span className="user-status-dot" />
+                                {enabled ? 'Activo' : 'Suspendido'}
+                              </span>
+                            </label>
+                          </td>
+                          <td style={{ padding: '16px 12px', fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            {u.last_login ? new Date(u.last_login).toLocaleDateString('es-MX') : '—'}
+                          </td>
+                          <td style={{ padding: '16px 12px', textAlign: 'right' }}>
+                            <button
+                              onClick={() => handleUpdateUserRole(u.id_usuario, u.id_rol === 1 ? 2 : 1)}
+                              className="btn-primary"
+                              style={{ padding: '6px 12px', fontSize: '0.7rem' }}
+                            >
+                              {u.id_rol === 1 ? 'HACER CLIENTE' : 'HACER ADMIN'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {/* TAB 5: WEARABLE */}
+          {activeTab === 'wearable' && (
+            <div style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '28px' }}>
+              <FlutterEmbed />
             </div>
           )}
         </>
@@ -575,6 +664,41 @@ export default function DashboardPage() {
                 <button type="button" onClick={() => setShowProductModal(false)} className="btn-secondary" style={{ border: '1px solid var(--border)', padding: '14px' }}>
                   CANCELAR
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {showCreateUserModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid var(--border)', borderRadius: '12px', padding: '36px', maxWidth: '440px', width: '100%', position: 'relative' }}>
+            <button onClick={() => setShowCreateUserModal(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', marginBottom: '20px' }}>Crear Nuevo Usuario</h2>
+            <form onSubmit={handleCreateUser}>
+              <div style={{ marginBottom: '14px' }}>
+                <label className="auth-label">Nombre Completo</label>
+                <input type="text" className="auth-input" required value={createUserForm.nombre} onChange={e => setCreateUserForm({ ...createUserForm, nombre: e.target.value })} placeholder="Nombre del usuario" />
+              </div>
+              <div style={{ marginBottom: '14px' }}>
+                <label className="auth-label">Correo Electrónico</label>
+                <input type="email" className="auth-input" required value={createUserForm.email} onChange={e => setCreateUserForm({ ...createUserForm, email: e.target.value })} placeholder="correo@ejemplo.com" />
+              </div>
+              <div style={{ marginBottom: '14px' }}>
+                <label className="auth-label">Contraseña Temporal</label>
+                <input type="password" className="auth-input" required minLength={6} value={createUserForm.password} onChange={e => setCreateUserForm({ ...createUserForm, password: e.target.value })} placeholder="Mínimo 6 caracteres" />
+              </div>
+              <div style={{ marginBottom: '20px' }}>
+                <label className="auth-label">Rol</label>
+                <select className="auth-input" value={createUserForm.id_rol} onChange={e => setCreateUserForm({ ...createUserForm, id_rol: Number(e.target.value) })}>
+                  <option value={2}>Cliente</option>
+                  <option value={1}>Administrador</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button type="submit" className="auth-btn" style={{ flex: 1 }} disabled={createUserLoading}>
+                  {createUserLoading ? 'CREANDO...' : 'CREAR USUARIO'}
+                </button>
+                <button type="button" onClick={() => setShowCreateUserModal(false)} className="btn-secondary" style={{ border: '1px solid var(--border)', padding: '14px' }}>CANCELAR</button>
               </div>
             </form>
           </div>

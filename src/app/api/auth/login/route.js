@@ -16,9 +16,10 @@ export async function POST(request) {
         id_usuario: result.user.id_usuario,
         nombre: result.user.nombre,
         email: result.user.email,
-        id_rol: result.user.id_rol
+        id_rol: result.user.id_rol,
+        is_enabled: result.user.is_enabled !== false
       });
-      return NextResponse.json({ success: true, user: result.user, token });
+      return NextResponse.json({ success: true, user: result.user, token, has_pin: !!result.user?.has_pin });
     }
     return NextResponse.json(result);
   } catch (error) {

@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import DiscountPopup from "@/components/DiscountPopup";
 import PwaRegister from "@/components/PwaRegister";
 import WatchCartSync from "@/components/WatchCartSync";
+import DbStatusBanner from "@/components/DbStatusBanner";
 
 export const metadata = {
   title: "Nexa — Objetos que ganan su lugar",
@@ -34,6 +35,7 @@ export default function RootLayout({ children }) {
               <FavoritesProvider>
                 <PwaRegister />
                 <WatchCartSync />
+                <DbStatusBanner />
                 <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                   <Header />
                   <main style={{ flexGrow: 1, paddingTop: '60px' }}>

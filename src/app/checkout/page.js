@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
@@ -16,7 +16,8 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState(null);
-  const [metodoPago, setMetodoPago] = useState('paypal'); // 'paypal' | 'card'
+  const [metodoPago, setMetodoPago] = useState('paypal');
+  const [savedAddressLoaded, setSavedAddressLoaded] = useState(false);
 
   const [form, setForm] = useState({
     nombre: user?.nombre || '',
@@ -27,6 +28,28 @@ export default function CheckoutPage() {
     codigo_postal: '',
     telefono_contacto: ''
   });
+
+  // Auto-load saved address from DB when user is logged in
+  useEffect(() => {
+    if (!user?.id_usuario) return;
+    fetchWithAuth('/api/address')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.direccion) {
+          const d = data.direccion;
+          setForm(prev => ({
+            ...prev,
+            calle_numero: d.calle_numero || prev.calle_numero,
+            colonia: d.colonia || prev.colonia,
+            ciudad: d.ciudad || prev.ciudad,
+            codigo_postal: d.codigo_postal || prev.codigo_postal,
+            telefono_contacto: d.telefono_contacto || prev.telefono_contacto,
+          }));
+          setSavedAddressLoaded(true);
+        }
+      })
+      .catch(() => {});
+  }, [user?.id_usuario, fetchWithAuth]);
 
   const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'BAAZuDEi8xdRFWFcOJSOwDxJtNePzpPUNVRNdwtiqiBtImgSc8vkTu4FPCxVvpUSxqJpTP_pmX2CC_iLfk';
 
@@ -42,6 +65,24 @@ export default function CheckoutPage() {
       return false;
     }
     return true;
+  };
+
+  // Save address to DB after successful order
+  const saveAddressToDB = async () => {
+    if (!user?.id_usuario) return;
+    try {
+      await fetchWithAuth('/api/address', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          calle_numero: form.calle_numero,
+          colonia: form.colonia,
+          ciudad: form.ciudad,
+          codigo_postal: form.codigo_postal,
+          telefono_contacto: form.telefono_contacto,
+        })
+      });
+    } catch {}
   };
 
   // Direct PayPal Sandbox Simulation Fallback
@@ -68,6 +109,7 @@ export default function CheckoutPage() {
       });
       const data = await res.json();
       if (data.success) {
+        await saveAddressToDB();
         setSuccess(true);
         setOrderId(data.id_pedido);
         showToast('¡Pago procesado con éxito mediante PayPal Sandbox!', 'success');
@@ -106,6 +148,7 @@ export default function CheckoutPage() {
       });
       const data = await res.json();
       if (data.success) {
+        await saveAddressToDB();
         setSuccess(true);
         setOrderId(data.id_pedido);
         showToast('¡Pedido realizado con éxito!', 'success');
@@ -208,6 +251,14 @@ export default function CheckoutPage() {
               <h2 className="checkout-section-title">
                 <span className="step-number">2</span>
                 <span>Dirección de Envío</span>
+                {savedAddressLoaded && (
+                  <span className="checkout-saved-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Guardada
+                  </span>
+                )}
               </h2>
               <div className="checkout-form-group">
                 <label className="checkout-label" htmlFor="calle_numero">Calle y Número</label>

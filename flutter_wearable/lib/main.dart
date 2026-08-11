@@ -28,7 +28,7 @@ class NexaWearApp extends StatelessWidget {
           surface: Color(0xFF1E1E1E),
         ),
       ),
-      home: const WatchPinAuthScreen(),
+      home: const WatchQrLoginScreen(),  // Pantalla inicial: QR de acceso
     );
   }
 }
@@ -307,7 +307,8 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
               if (mounted) {
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
-                    builder: (_) => WatchHomeScreen(watchToken: _token!),
+                    // Ir a pantalla de PIN (el del registro) antes del home
+                    builder: (_) => WatchPinVerifyScreen(watchToken: _token!),
                   ),
                 );
               }
@@ -505,7 +506,193 @@ class _WatchQrLoginScreenState extends State<WatchQrLoginScreen> {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// SCREEN 3: Catálogo de OFERTAS con carrito y favoritos
+// SCREEN 3: Verificación de PIN del usuario (el creado al registrarse en la web)
+// ────────────────────────────────────────────────────────────────────────────
+class WatchPinVerifyScreen extends StatefulWidget {
+  final String watchToken;
+  const WatchPinVerifyScreen({super.key, required this.watchToken});
+
+  @override
+  State<WatchPinVerifyScreen> createState() => _WatchPinVerifyScreenState();
+}
+
+class _WatchPinVerifyScreenState extends State<WatchPinVerifyScreen> {
+  String _pin = '';
+  bool _loading = false;
+  String? _error;
+  int _attempts = 0;
+
+  void _handleKey(String value) {
+    if (_loading) return;
+    setState(() {
+      if (_pin.length < 4) _pin += value;
+    });
+    if (_pin.length == 4) _verifyPin();
+  }
+
+  void _handleBackspace() {
+    if (_loading) return;
+    setState(() {
+      if (_pin.isNotEmpty) _pin = _pin.substring(0, _pin.length - 1);
+    });
+  }
+
+  Future<void> _verifyPin() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/api/watch/verify-pin'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'token': widget.watchToken, 'pin': _pin}),
+      ).timeout(const Duration(seconds: 8));
+
+      final data = json.decode(res.body);
+      if (!mounted) return;
+
+      if (data['success'] == true) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => WatchHomeScreen(watchToken: widget.watchToken),
+          ),
+        );
+      } else {
+        _attempts++;
+        setState(() {
+          _pin = '';
+          _error = _attempts >= 3
+              ? 'Demasiados intentos. QR expirado.'
+              : data['error'] ?? 'PIN incorrecto';
+          _loading = false;
+        });
+        if (_attempts >= 3) {
+          await Future.delayed(const Duration(seconds: 2));
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const WatchQrLoginScreen()),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() { _pin = ''; _error = 'Error de red. Intenta de nuevo.'; _loading = false; });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    return Scaffold(
+      body: Center(
+        child: Container(
+          width: size.width,
+          height: size.height,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF26201B), Color(0xFF0F0E0D)],
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('N E X A',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900,
+                      letterSpacing: 2, color: Color(0xFFF5F0EB))),
+              const SizedBox(height: 2),
+              const Text('INGRESA TU PIN',
+                  style: TextStyle(fontSize: 7, letterSpacing: 1.5,
+                      color: Color(0xFFB8860B), fontWeight: FontWeight.w700)),
+              const SizedBox(height: 2),
+              if (_error != null)
+                Text(_error!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 7, color: Color(0xFFC85A2A)))
+              else
+                const Text('El PIN que creaste al registrarte',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 6.5, color: Colors.grey)),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(4, (i) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 5),
+                  width: 9, height: 9,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: i < _pin.length ? const Color(0xFFC85A2A) : const Color(0xFF3A342E),
+                    border: Border.all(
+                      color: i < _pin.length ? const Color(0xFFC85A2A) : const Color(0xFF5A4E42),
+                      width: 1,
+                    ),
+                  ),
+                )),
+              ),
+              const SizedBox(height: 6),
+              if (_loading)
+                const SizedBox(
+                  width: 16, height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5, color: Color(0xFFC85A2A),
+                  ),
+                ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: GridView.count(
+                    crossAxisCount: 3,
+                    childAspectRatio: 1.35,
+                    mainAxisSpacing: 3,
+                    crossAxisSpacing: 4,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      ...'123456789'.split('').map((v) => _buildKey(v, () => _handleKey(v))),
+                      _buildKey('C', () => setState(() { _pin = ''; _error = null; }),
+                          color: Colors.grey),
+                      _buildKey('0', () => _handleKey('0')),
+                      _buildKey('←', _handleBackspace, color: const Color(0xFFC85A2A)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKey(String label, VoidCallback onTap, {Color? color}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF26201B),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFF3E332A), width: 0.5),
+          ),
+          alignment: Alignment.center,
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: color ?? Colors.white)),
+        ),
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// SCREEN 4: Catálogo de OFERTAS con carrito y favoritos
 // ────────────────────────────────────────────────────────────────────────────
 class WatchHomeScreen extends StatefulWidget {
   final String watchToken;

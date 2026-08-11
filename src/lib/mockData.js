@@ -194,16 +194,18 @@ export async function loginUsuario(email, password) {
     try {
       const { data, error } = await supabase
         .from('usuarios')
-        .select('id_usuario, nombre, email, id_rol, password_hash')
+        .select('id_usuario, nombre, email, id_rol, password_hash, is_enabled, pin_hash')
         .ilike('email', normalizedEmail)
         .single();
       
       if (!error && data) {
+        if (data.is_enabled === false) return { success: false, error: 'Tu cuenta ha sido suspendida. Contacta al administrador.', suspended: true };
         const passwordMatch = data.password_hash 
           ? await bcrypt.compare(password, data.password_hash)
           : false;
         if (passwordMatch) {
-          return { success: true, user: { id_usuario: data.id_usuario, nombre: data.nombre, email: data.email, id_rol: data.id_rol } };
+          await supabase.from('usuarios').update({ last_login: new Date().toISOString() }).eq('id_usuario', data.id_usuario);
+          return { success: true, user: { id_usuario: data.id_usuario, nombre: data.nombre, email: data.email, id_rol: data.id_rol, has_pin: !!data.pin_hash } };
         }
         return { success: false, error: 'Contraseña incorrecta. Verifica tu contraseña e intenta de nuevo.' };
       }
@@ -456,7 +458,7 @@ export async function updateEstadoPedido(id_pedido, nuevoEstado) {
 export async function getUsuarios() {
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('usuarios').select('id_usuario, nombre, email, id_rol, fecha_registro, roles(nombre_rol)');
+      const { data, error } = await supabase.from('usuarios').select('id_usuario, nombre, email, id_rol, fecha_registro, is_enabled, last_login, require_password_change, pin_hash, roles(nombre_rol)');
       if (!error && data) return data;
     } catch (e) {
       console.error('Supabase getUsuarios error:', e);
@@ -478,4 +480,195 @@ export async function updateRolUsuario(id_usuario, nuevoRol) {
     }
   }
   return { success: true };
+}
+
+// ─── PIN MANAGEMENT ────────────────────────────────────────────────────────
+export async function setPinUsuario(id_usuario, pin) {
+  const salt = await bcrypt.genSalt(10);
+  const pin_hash = await bcrypt.hash(pin, salt);
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('usuarios')
+        .update({ pin_hash })
+        .eq('id_usuario', id_usuario);
+      if (!error) return { success: true };
+    } catch (e) {
+      console.error('Supabase setPinUsuario error:', e);
+    }
+  }
+  // fallback: store in mock
+  const mockUsers = [
+    { id_usuario: 1, nombre: 'Administrador Nexa', email: 'admin@nexa.com', id_rol: 1 },
+    { id_usuario: 2, nombre: 'Cliente Demo', email: 'demo@nexa.com', id_rol: 2 }
+  ];
+  const u = mockUsers.find(u => u.id_usuario === Number(id_usuario));
+  if (u) u.pin_hash = pin_hash;
+  return { success: true };
+}
+
+export async function verificarPin(id_usuario, pin) {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('pin_hash')
+        .eq('id_usuario', id_usuario)
+        .single();
+      if (!error && data && data.pin_hash) {
+        const match = await bcrypt.compare(pin, data.pin_hash);
+        return { success: match, hasPin: true };
+      }
+      if (!error && data && !data.pin_hash) return { success: false, hasPin: false };
+    } catch (e) {
+      console.error('Supabase verificarPin error:', e);
+    }
+  }
+  return { success: false, hasPin: false };
+}
+
+export async function verificarPinByToken(token, pin) {
+  // Used by wearable: token is a confirmed qr_session token, userId stored there
+  if (supabase) {
+    try {
+      const { data: session, error: sessErr } = await supabase
+        .from('qr_sessions')
+        .select('user_id, status')
+        .eq('token', token)
+        .single();
+      if (sessErr || !session || session.status !== 'confirmed') {
+        return { success: false, error: 'Token inválido o no confirmado' };
+      }
+      const userId = session.user_id;
+      // Try to find user by id or email
+      let userQuery = supabase.from('usuarios').select('id_usuario, pin_hash');
+      if (!isNaN(Number(userId))) {
+        userQuery = userQuery.eq('id_usuario', Number(userId));
+      } else {
+        userQuery = userQuery.ilike('email', userId);
+      }
+      const { data: user, error: userErr } = await userQuery.single();
+      if (userErr || !user || !user.pin_hash) {
+        return { success: false, error: 'Usuario sin PIN configurado' };
+      }
+      const match = await bcrypt.compare(pin, user.pin_hash);
+      return { success: match, userId: user.id_usuario };
+    } catch (e) {
+      console.error('Supabase verificarPinByToken error:', e);
+    }
+  }
+  return { success: false, error: 'Supabase no configurado' };
+}
+
+// ─── USER STATUS (is_enabled) ──────────────────────────────────────────────
+export async function toggleEstadoUsuario(id_usuario, is_enabled) {
+  const now = new Date().toISOString();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .update({ is_enabled })
+        .eq('id_usuario', id_usuario)
+        .select()
+        .single();
+      if (!error && data) return { success: true, usuario: data };
+    } catch (e) {
+      console.error('Supabase toggleEstadoUsuario error:', e);
+    }
+  }
+  return { success: true };
+}
+
+export async function createUsuarioAdmin(data) {
+  const { nombre, email, password, id_rol = 2 } = data;
+  const salt = await bcrypt.genSalt(10);
+  const password_hash = await bcrypt.hash(password, salt);
+  if (supabase) {
+    try {
+      const { data: newUser, error } = await supabase
+        .from('usuarios')
+        .insert([{ nombre, email, password_hash, id_rol, is_enabled: true }])
+        .select('id_usuario, nombre, email, id_rol, fecha_registro, is_enabled')
+        .single();
+      if (!error && newUser) return { success: true, usuario: newUser };
+      if (error) return { success: false, error: error.message };
+    } catch (e) {
+      console.error('Supabase createUsuarioAdmin error:', e);
+    }
+  }
+  return { success: true, usuario: { id_usuario: Date.now(), nombre, email, id_rol, is_enabled: true } };
+}
+
+// ─── ADDRESS (direcciones_envio) ──────────────────────────────────────────
+export async function getDireccionByUsuario(id_usuario) {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('direcciones_envio')
+        .select('*')
+        .eq('id_usuario', id_usuario)
+        .order('id_direccion', { ascending: false })
+        .limit(1)
+        .single();
+      if (!error && data) return data;
+    } catch (e) {
+      console.error('Supabase getDireccionByUsuario error:', e);
+    }
+  }
+  return null;
+}
+
+export async function saveDireccion(id_usuario, { calle_numero, colonia, ciudad, codigo_postal, telefono_contacto }) {
+  if (supabase) {
+    try {
+      // Check if a direccion already exists
+      const { data: existing } = await supabase
+        .from('direcciones_envio')
+        .select('id_direccion')
+        .eq('id_usuario', id_usuario)
+        .limit(1)
+        .single();
+      if (existing?.id_direccion) {
+        // Update
+        const { data, error } = await supabase
+          .from('direcciones_envio')
+          .update({ calle_numero, colonia, ciudad, codigo_postal, telefono_contacto })
+          .eq('id_direccion', existing.id_direccion)
+          .select()
+          .single();
+        if (!error) return { success: true, direccion: data };
+      } else {
+        // Insert
+        const { data, error } = await supabase
+          .from('direcciones_envio')
+          .insert([{ id_usuario, calle_numero, colonia, ciudad, codigo_postal, telefono_contacto }])
+          .select()
+          .single();
+        if (!error) return { success: true, direccion: data };
+      }
+    } catch (e) {
+      console.error('Supabase saveDireccion error:', e);
+    }
+  }
+  return { success: true, direccion: null };
+}
+
+// ─── BANNERS ──────────────────────────────────────────────────────────────
+export async function getBanners() {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('banners')
+        .select('*')
+        .eq('activo', true)
+        .order('orden');
+      if (!error && data && data.length > 0) return data;
+    } catch (e) {
+      console.error('Supabase getBanners error:', e);
+    }
+  }
+  return [
+    { id_banner: 1, titulo: 'Nueva Colección', subtitulo: 'Objetos que ganan su lugar', url_imagen: '/images/products/travertine_tray.png', url_destino: '/shop', activo: true, orden: 1 },
+    { id_banner: 2, titulo: 'Envío Gratis', subtitulo: 'En pedidos mayores a $100', url_imagen: '/images/products/desk_lamp.png', url_destino: '/shop', activo: true, orden: 2 },
+  ];
 }
