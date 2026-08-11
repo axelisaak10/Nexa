@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUsuarios, updateRolUsuario, toggleEstadoUsuario, createUsuarioAdmin } from '@/lib/mockData';
+import { getUsuarios, updateRolUsuario, toggleEstadoUsuario, createUsuarioAdmin, updateUsuarioAdmin } from '@/lib/mockData';
 import { getSession, isAdmin } from '@/lib/authHelper';
 
 export async function GET(request) {
@@ -40,21 +40,12 @@ export async function PUT(request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
     const body = await request.json();
-    const { id_usuario, id_rol, is_enabled } = body;
+    const { id_usuario, nombre, email, id_rol, is_enabled, password, pin } = body;
     if (!id_usuario) {
       return NextResponse.json({ success: false, error: 'ID de usuario requerido' }, { status: 400 });
     }
-    // Handle is_enabled toggle
-    if (typeof is_enabled === 'boolean') {
-      const result = await toggleEstadoUsuario(id_usuario, is_enabled);
-      return NextResponse.json(result);
-    }
-    // Handle role change
-    if (id_rol !== undefined) {
-      const result = await updateRolUsuario(id_usuario, id_rol);
-      return NextResponse.json(result);
-    }
-    return NextResponse.json({ success: false, error: 'Nada que actualizar' }, { status: 400 });
+    const result = await updateUsuarioAdmin(id_usuario, { nombre, email, id_rol, is_enabled, password, pin });
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to update user' }, { status: 500 });
   }

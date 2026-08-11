@@ -38,6 +38,12 @@ export default function DashboardPage() {
   const [createUserForm, setCreateUserForm] = useState({ nombre: '', email: '', password: '', id_rol: 2 });
   const [createUserLoading, setCreateUserLoading] = useState(false);
 
+  // Modal para editar usuario
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editUserForm, setEditUserForm] = useState({ nombre: '', email: '', id_rol: 2, is_enabled: true, password: '', pin: '' });
+  const [editUserLoading, setEditUserLoading] = useState(false);
+
   const isAdmin = user && (user.id_rol === 1 || user.email === 'admin@nexa.com');
 
   const fetchDashboardData = useCallback(async () => {
@@ -253,6 +259,47 @@ export default function DashboardPage() {
       showToast('Error de red', 'error');
     }
     setCreateUserLoading(false);
+  };
+
+  // Open & Save Edit User Handler
+  const handleOpenEditUser = (u) => {
+    setEditingUser(u);
+    setEditUserForm({
+      nombre: u.nombre || '',
+      email: u.email || '',
+      id_rol: u.id_rol || 2,
+      is_enabled: u.is_enabled !== false,
+      password: '',
+      pin: ''
+    });
+    setShowEditUserModal(true);
+  };
+
+  const handleSaveEditUser = async (e) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setEditUserLoading(true);
+    try {
+      const res = await fetchWithAuth('/api/admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_usuario: editingUser.id_usuario,
+          ...editUserForm
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('¡Datos del usuario actualizados!', 'success');
+        setShowEditUserModal(false);
+        fetchDashboardData();
+      } else {
+        showToast(data.error || 'Error al actualizar usuario', 'error');
+      }
+    } catch (e) {
+      showToast('Error de conexión', 'error');
+    }
+    setEditUserLoading(false);
   };
 
   const totalVentas = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
@@ -537,6 +584,12 @@ export default function DashboardPage() {
                           </td>
                           <td style={{ padding: '16px 12px', textAlign: 'right' }}>
                             <button
+                              onClick={() => handleOpenEditUser(u)}
+                              style={{ background: 'none', border: 'none', color: '#1A1A1A', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginRight: '12px', fontWeight: '600' }}
+                            >
+                              EDITAR
+                            </button>
+                            <button
                               onClick={() => handleUpdateUserRole(u.id_usuario, u.id_rol === 1 ? 2 : 1)}
                               className="btn-primary"
                               style={{ padding: '6px 12px', fontSize: '0.7rem' }}
@@ -699,6 +752,60 @@ export default function DashboardPage() {
                   {createUserLoading ? 'CREANDO...' : 'CREAR USUARIO'}
                 </button>
                 <button type="button" onClick={() => setShowCreateUserModal(false)} className="btn-secondary" style={{ border: '1px solid var(--border)', padding: '14px' }}>CANCELAR</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDITAR USUARIO */}
+      {showEditUserModal && editingUser && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid var(--border)', borderRadius: '12px', padding: '36px', maxWidth: '480px', width: '100%', position: 'relative' }}>
+            <button onClick={() => setShowEditUserModal(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', marginBottom: '20px' }}>
+              Editar Usuario #{editingUser.id_usuario}
+            </h2>
+            <form onSubmit={handleSaveEditUser}>
+              <div style={{ marginBottom: '14px' }}>
+                <label className="auth-label">Nombre Completo</label>
+                <input type="text" className="auth-input" required value={editUserForm.nombre} onChange={e => setEditUserForm({ ...editUserForm, nombre: e.target.value })} />
+              </div>
+              <div style={{ marginBottom: '14px' }}>
+                <label className="auth-label">Correo Electrónico</label>
+                <input type="email" className="auth-input" required value={editUserForm.email} onChange={e => setEditUserForm({ ...editUserForm, email: e.target.value })} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                <div>
+                  <label className="auth-label">Rol</label>
+                  <select className="auth-input" value={editUserForm.id_rol} onChange={e => setEditUserForm({ ...editUserForm, id_rol: Number(e.target.value) })}>
+                    <option value={2}>Cliente</option>
+                    <option value={1}>Administrador</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="auth-label">Estado</label>
+                  <select className="auth-input" value={editUserForm.is_enabled ? 'true' : 'false'} onChange={e => setEditUserForm({ ...editUserForm, is_enabled: e.target.value === 'true' })}>
+                    <option value="true">Activo</option>
+                    <option value="false">Suspendido</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                <div>
+                  <label className="auth-label">Nueva Contraseña (Opcional)</label>
+                  <input type="password" className="auth-input" placeholder="Dejar vacío sin cambio" value={editUserForm.password} onChange={e => setEditUserForm({ ...editUserForm, password: e.target.value })} />
+                </div>
+                <div>
+                  <label className="auth-label">Nuevo PIN 4 Días (Opcional)</label>
+                  <input type="text" maxLength={4} className="auth-input" placeholder="ej. 1234" value={editUserForm.pin} onChange={e => setEditUserForm({ ...editUserForm, pin: e.target.value })} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button type="submit" className="auth-btn" style={{ flex: 1 }} disabled={editUserLoading}>
+                  {editUserLoading ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
+                </button>
+                <button type="button" onClick={() => setShowEditUserModal(false)} className="btn-secondary" style={{ border: '1px solid var(--border)', padding: '14px' }}>CANCELAR</button>
               </div>
             </form>
           </div>

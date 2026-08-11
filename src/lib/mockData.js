@@ -8,6 +8,68 @@ export const supabase = (supabaseUrl && supabaseKey)
   ? createClient(supabaseUrl, supabaseKey) 
   : null;
 
+export function getMockProductos() { return mockProductos; }
+
+export async function updateUsuarioAdmin(id_usuario, { nombre, email, id_rol, is_enabled, password, pin }) {
+  const updates = {};
+  if (nombre) updates.nombre = nombre;
+  if (email) updates.email = email.trim().toLowerCase();
+  if (id_rol !== undefined) updates.id_rol = Number(id_rol);
+  if (typeof is_enabled === 'boolean') updates.is_enabled = is_enabled;
+  if (password && password.trim()) {
+    const salt = await bcrypt.genSalt(10);
+    updates.password_hash = await bcrypt.hash(password.trim(), salt);
+  }
+  if (pin && pin.trim()) {
+    const salt = await bcrypt.genSalt(10);
+    updates.pin_hash = await bcrypt.hash(pin.trim(), salt);
+  }
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .update(updates)
+        .eq('id_usuario', id_usuario)
+        .select()
+        .single();
+      if (!error && data) return { success: true, usuario: data };
+    } catch (e) {
+      console.error('Supabase updateUsuarioAdmin error:', e);
+    }
+  }
+  return { success: true };
+}
+
+export async function updatePerfilUsuario(id_usuario, { nombre, email, password, pin }) {
+  const updates = {};
+  if (nombre) updates.nombre = nombre;
+  if (email) updates.email = email.trim().toLowerCase();
+  if (password && password.trim()) {
+    const salt = await bcrypt.genSalt(10);
+    updates.password_hash = await bcrypt.hash(password.trim(), salt);
+  }
+  if (pin && pin.trim()) {
+    const salt = await bcrypt.genSalt(10);
+    updates.pin_hash = await bcrypt.hash(pin.trim(), salt);
+  }
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .update(updates)
+        .eq('id_usuario', id_usuario)
+        .select()
+        .single();
+      if (!error && data) return { success: true, usuario: data };
+    } catch (e) {
+      console.error('Supabase updatePerfilUsuario error:', e);
+    }
+  }
+  return { success: true };
+}
+
 // Mock fallback products matching Spanish database schema
 export const mockProductos = [
   {
@@ -223,14 +285,14 @@ export async function loginUsuario(email, password) {
     const match = await bcrypt.compare(password, '$2a$10$7q5f5mJmC6HlD3iN78D8Ae/iN/y/g0W1WlSjK16hR0p3a7a9Z3x8q');
     const legacyMatch = password === 'admin123';
     if (match || legacyMatch) {
-      return { success: true, user: { id_usuario: 1, nombre: 'Administrador Nexa', email: 'admin@nexa.com', id_rol: 1 } };
+      return { success: true, user: { id_usuario: 1, nombre: 'Administrador Nexa', email: 'admin@nexa.com', id_rol: 1, last_login: new Date().toISOString() } };
     }
   }
   if (normalizedEmail === 'demo@nexa.com') {
     const match = await bcrypt.compare(password, '$2a$10$tZ9c/JqN/B8c4y7J7c2oOe/y0G1G1wK8uSjK16hR0p3a7a9Z3x8q');
     const legacyMatch = password === 'demo123';
     if (match || legacyMatch) {
-      return { success: true, user: { id_usuario: 2, nombre: 'Cliente Demo', email: 'demo@nexa.com', id_rol: 2 } };
+      return { success: true, user: { id_usuario: 2, nombre: 'Cliente Demo', email: 'demo@nexa.com', id_rol: 2, last_login: new Date().toISOString() } };
     }
   }
   return { success: false, error: 'Correo o contraseña incorrectos. Verifica tus datos e intenta de nuevo.' };
