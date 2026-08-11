@@ -6,7 +6,7 @@ export async function POST(request) {
   try {
     const session = getSession(request);
     const body = await request.json().catch(() => ({}));
-    const { id_usuario, pin } = body;
+    const { id_usuario, email, pin } = body;
 
     const targetPin = pin || body.newPin;
     if (!targetPin || String(targetPin).length !== 4 || !/^\d{4}$/.test(String(targetPin))) {
@@ -14,11 +14,13 @@ export async function POST(request) {
     }
 
     const targetId = id_usuario || session?.id_usuario;
-    if (!targetId) {
-      return NextResponse.json({ success: false, error: 'ID de usuario requerido o inicia sesión' }, { status: 400 });
+    const targetEmail = email || session?.email;
+
+    if (!targetId && !targetEmail) {
+      return NextResponse.json({ success: false, error: 'ID de usuario o email requerido' }, { status: 400 });
     }
 
-    const result = await setPinUsuario(targetId, targetPin);
+    const result = await setPinUsuario(targetId, targetPin, targetEmail);
     return NextResponse.json(result);
   } catch (error) {
     console.error('PIN set error:', error);

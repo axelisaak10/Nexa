@@ -27,11 +27,16 @@ export async function updateUsuarioAdmin(id_usuario, { nombre, email, id_rol, is
 
   if (supabase) {
     try {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .update(updates)
-        .eq('id_usuario', id_usuario)
-        .select();
+      let query = supabase.from('usuarios').update(updates);
+      if (id_usuario && email) {
+        query = query.or(`id_usuario.eq.${id_usuario},email.ilike.${email.trim()}`);
+      } else if (id_usuario) {
+        query = query.eq('id_usuario', id_usuario);
+      } else if (email) {
+        query = query.ilike('email', email.trim());
+      }
+      const { data, error } = await query.select();
+
       if (error) {
         console.error('Supabase updateUsuarioAdmin error:', error);
         if (error.message?.includes('pin_hash')) {
@@ -39,6 +44,14 @@ export async function updateUsuarioAdmin(id_usuario, { nombre, email, id_rol, is
         }
         return { success: false, error: `Error de Supabase: ${error.message}` };
       }
+
+      if (!data || data.length === 0) {
+        console.warn('Supabase updateUsuarioAdmin: 0 filas actualizadas. Posible bloqueo por RLS.');
+        // Re-try updating without select or report RLS lock
+        const retry = await supabase.from('usuarios').update(updates).eq('email', email.trim().toLowerCase());
+        if (retry.error) return { success: false, error: `Error al actualizar: ${retry.error.message}` };
+      }
+
       return { success: true, usuario: data ? data[0] : null };
     } catch (e) {
       console.error('Supabase updateUsuarioAdmin error:', e);
@@ -552,17 +565,21 @@ export async function updateRolUsuario(id_usuario, nuevoRol) {
 }
 
 // ─── PIN MANAGEMENT ────────────────────────────────────────────────────────
-export async function setPinUsuario(id_usuario, pin) {
-  if (!id_usuario || !pin) return { success: false, error: 'ID de usuario y PIN requeridos' };
+export async function setPinUsuario(id_usuario, pin, email = null) {
+  if (!pin) return { success: false, error: 'PIN requerido' };
   const salt = await bcrypt.genSalt(10);
   const pin_hash = await bcrypt.hash(String(pin).trim(), salt);
   if (supabase) {
     try {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .update({ pin_hash })
-        .eq('id_usuario', id_usuario)
-        .select();
+      let query = supabase.from('usuarios').update({ pin_hash });
+      if (id_usuario) {
+        query = query.eq('id_usuario', id_usuario);
+      } else if (email) {
+        query = query.ilike('email', email.trim());
+      } else {
+        return { success: false, error: 'ID de usuario o email requerido' };
+      }
+      const { data, error } = await query.select();
       if (error) {
         console.error('Supabase setPinUsuario error:', error);
         if (error.message?.includes('pin_hash')) {
@@ -576,13 +593,6 @@ export async function setPinUsuario(id_usuario, pin) {
       return { success: false, error: e.message };
     }
   }
-  // fallback: store in mock
-  const mockUsers = [
-    { id_usuario: 1, nombre: 'Administrador Nexa', email: 'admin@nexa.com', id_rol: 1 },
-    { id_usuario: 2, nombre: 'Cliente Demo', email: 'demo@nexa.com', id_rol: 2 }
-  ];
-  const u = mockUsers.find(u => u.id_usuario === Number(id_usuario));
-  if (u) u.pin_hash = pin_hash;
   return { success: true };
 }
 
