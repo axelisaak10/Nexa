@@ -106,3 +106,28 @@ Al preparar un nuevo release:
 3. Documentar los cambios principales en la sección **Historial de Cambios** de este archivo [`VERSION.md`](file:///c:/Users/axeli/OneDrive/Documentos/React/nexa/VERSION.md).
 4. Hacer commit de actualización: `git commit -m "chore(release): bump version to vX.Y.Z"`.
 5. Generar el Git Tag `git tag -a vX.Y.Z -m "Release vX.Y.Z"` y realizar `git push origin main --tags`.
+
+---
+
+## ⚖️ Términos y Condiciones de Uso del Software
+
+El uso y distribución de cualquier versión del ecosistema **Nexa** (incluyendo Web PWA, aplicación Flutter Móvil y aplicación Flutter Wearable) está sujeto a las siguientes condiciones:
+
+### 1. Licencia y Ámbito de Uso
+- **Propósito Académico y de Evaluación:** El software Nexa ha sido desarrollado como entregable evaluativo para la asignatura *Desarrollo para Dispositivos Inteligentes* (Entregables DE.1 a DE.4).
+- **Licencia de Código:** Queda autorizada la revisión, ejecución y auditoría del código fuente por parte del personal docente, evaluadores y desarrolladores autorizados.
+
+### 2. Transacciones y Pasarela de Pago
+- **Entorno de Pruebas (Sandbox):** La integración con PayPal (`@paypal/react-paypal-js`) funciona exclusivamente en modo Sandbox / Pruebas. **No se procesan pagos reales ni cobros con dinero genuino.**
+
+### 3. Privacidad y Protección de Datos
+- **Almacenamiento de Datos:** La información de usuarios, carrito de compras y favoritos se gestiona de manera cifrada a través de Supabase mediante políticas RLS (Row Level Security) y Cookies de sesión HTTP Only.
+- **Tratamiento:** No se comparten ni comercializan datos personales con terceros.
+
+### 4. Limitación de Responsabilidad
+- El software se entrega **"TAL CUAL" (AS IS)**, sin garantías implícitas o explícitas más allá de las métricas verificadas en los reportes auditables (`REPORTE_DE_PRUEBAS_Y_LIGHTHOUSE.md`).
+
+---
+
+> 📄 **Documentación Completa:** Para consultar la versión extendida de los Términos y Condiciones de la plataforma, refiérase al documento [`TERMINOS_Y_CONDICIONES.md`](file:///c:/Users/axeli/OneDrive/Documentos/React/nexa/TERMINOS_Y_CONDICIONES.md).
+

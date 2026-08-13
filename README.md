@@ -67,5 +67,8 @@ flutter run -d chrome # Móvil o emulador
 
 ## 📄 Documentación Adicional
 
-* 📊 [Reporte de Pruebas y Lighthouse](file:///c:/Users/USER/Documents/WEB/Nexa/REPORTE_DE_PRUEBAS_Y_LIGHTHOUSE.md)
-* 🛡️ [Documentación de Seguridad](file:///c:/Users/USER/Documents/WEB/Nexa/DOCUMENTACION_SEGURIDAD.md)
+* 📌 [Control de Versiones y Release Notes (VERSION.md)](file:///c:/Users/axeli/OneDrive/Documentos/React/nexa/VERSION.md)
+* ⚖️ [Términos y Condiciones de Uso (TERMINOS_Y_CONDICIONES.md)](file:///c:/Users/axeli/OneDrive/Documentos/React/nexa/TERMINOS_Y_CONDICIONES.md)
+* 📊 [Reporte de Pruebas y Lighthouse](file:///c:/Users/axeli/OneDrive/Documentos/React/nexa/REPORTE_DE_PRUEBAS_Y_LIGHTHOUSE.md)
+* 🛡️ [Documentación de Seguridad](file:///c:/Users/axeli/OneDrive/Documentos/React/nexa/DOCUMENTACION_SEGURIDAD.md)
+

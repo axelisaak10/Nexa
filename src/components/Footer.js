@@ -28,10 +28,10 @@ export default function Footer() {
           <div className="footer-column">
             <h4 className="footer-title">Servicio</h4>
             <ul className="footer-links">
+              <li><Link href="/terms" className="footer-link">Términos y Condiciones</Link></li>
               <li><Link href="/about" className="footer-link">Envíos</Link></li>
               <li><Link href="/about" className="footer-link">Devoluciones</Link></li>
               <li><Link href="/about" className="footer-link">Guía de Cuidados</Link></li>
-              <li><Link href="/about" className="footer-link">Programa Profesional</Link></li>
             </ul>
           </div>
           <div className="footer-column">
@@ -45,7 +45,9 @@ export default function Footer() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span className="footer-copyright">© 2026 Nexa. Todos los derechos reservados.</span>
+          <span className="footer-copyright">
+            © 2026 Nexa. Todos los derechos reservados. | <Link href="/terms" style={{ textDecoration: 'underline' }}>Términos y Condiciones</Link>
+          </span>
           <span className="footer-tagline">Objetos hechos con dedicación.</span>
         </div>
       </div>
