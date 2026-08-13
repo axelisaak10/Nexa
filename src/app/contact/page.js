@@ -186,20 +186,31 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* Mapa de Ubicación Interactivo/Visual (Elemento 12) */}
+          {/* Mapa de Ubicación Interactivo de Tienda */}
           <div className="contact-map-card" style={{ backgroundColor: '#FFFFFF', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', overflow: 'hidden' }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', marginBottom: '10px', paddingLeft: '4px' }}>
-              UBICACIÓN DE TIENDA Y SHOWROOM
+              UBICACIÓN DE TIENDA Y SHOWROOM (Paseo de la Reforma, CDMX)
             </span>
-            <div style={{ position: 'relative', width: '100%', height: '200px', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#E8E2D8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ position: 'absolute', inset: 0, opacity: 0.8, backgroundImage: 'radial-gradient(#D5CBBE 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
-              <div style={{ position: 'relative', textAlign: 'center', zIndex: 2, padding: '16px', backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '8px', boxShadow: '0 4px 14px rgba(0,0,0,0.1)' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--accent)" stroke="none" style={{ margin: '0 auto 6px auto', display: 'block' }}>
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                </svg>
-                <span style={{ fontFamily: 'var(--font-serif)', fontWeight: '600', fontSize: '0.95rem', display: 'block' }}>Nexa Showroom Reforma</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>CDMX — Lunes a Sábado, 10:00 - 19:00</span>
-              </div>
+            <div style={{ position: 'relative', width: '100%', height: '240px', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+              <iframe
+                title="Mapa Showroom Nexa Reforma CDMX"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                src="https://www.openstreetmap.org/export/embed.html?bbox=-99.1750%2C19.4200%2C-99.1600%2C19.4350&amp;layer=mapnik&amp;marker=19.4270%2C-99.1676"
+              />
+            </div>
+            <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+              <span>📍 Av. Paseo de la Reforma 402, Juárez, CDMX</span>
+              <a 
+                href="https://www.openstreetmap.org/?mlat=19.4270&amp;mlon=-99.1676#map=16/19.4270/-99.1676" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ color: 'var(--accent)', fontWeight: '600', textDecoration: 'none' }}
+              >
+                Abrir Mapa Completo ↗
+              </a>
             </div>
           </div>
         </div>
