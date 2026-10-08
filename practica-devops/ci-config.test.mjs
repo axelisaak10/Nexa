@@ -28,6 +28,7 @@ test('Configuración CI/CD del proyecto integrador', async t => {
     assert.match(workflow, /nexa-api:\$\{\{ github\.sha \}\}/);
   });
   await t.test('despliegue usa secretos SSH sin direcciones incrustadas', () => {
+    assert.match(workflow, /vars\.DEPLOY_ENABLED == 'true'/);
     for (const name of ['EC2_HOST', 'EC2_USER', 'EC2_SSH_KEY', 'EC2_KNOWN_HOSTS', 'ADMIN_TOKEN']) assert.match(workflow, new RegExp(`secrets\\.${name}`));
     assert.doesNotMatch(workflow, /\b(?:\d{1,3}\.){3}\d{1,3}\b/);
   });

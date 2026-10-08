@@ -65,7 +65,7 @@ jobs:
 
   deploy:
     name: Desplegar en AWS EC2
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
     needs: publish
     runs-on: ubuntu-latest
     environment: production
