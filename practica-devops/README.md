@@ -105,6 +105,9 @@ La API queda disponible en `http://IP_PUBLICA/api/health`.
 
 En GitHub: Settings, Secrets and variables, Actions, New repository secret.
 
+El despliegue utiliza `EC2_SSH_KEY` para crear temporalmente `~/.ssh/ec2.pem` y
+se conecta mediante `ssh -i`; no requiere un secreto `EC2_KNOWN_HOSTS`.
+
 El despliegue a EC2 se habilita creando la variable de repositorio
 `DEPLOY_ENABLED` con el valor `true`. Mientras no exista, CI publica la imagen
 en Docker Hub y omite el trabajo de EC2 para evitar fallos por una conexión SSH

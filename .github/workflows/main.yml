@@ -35,8 +35,6 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
-    outputs:
-      image: ${{ steps.image.outputs.value }}
     steps:
       - name: Descargar código
         uses: actions/checkout@v4
@@ -47,10 +45,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Definir imagen
-        id: image
-        shell: bash
-        run: echo "value=${{ secrets.DOCKERHUB_USERNAME }}/nexa-api:${{ github.sha }}" >> "$GITHUB_OUTPUT"
       - name: Compilar y publicar latest y hash del commit
         uses: docker/build-push-action@v6
         with:
@@ -72,28 +66,24 @@ jobs:
     steps:
       - name: Descargar código
         uses: actions/checkout@v4
-      - name: Cargar clave SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
-      - name: Registrar identidad del servidor
+      - name: Preparar archivo PEM
         shell: bash
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          printf '%s\n' "${{ secrets.EC2_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2.pem
+          chmod 600 ~/.ssh/ec2.pem
       - name: Guardar secreto de la API en EC2
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         shell: bash
         run: |
           set +x
-          printf 'ADMIN_TOKEN=%s\n' "$ADMIN_TOKEN" | ssh "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
+          printf 'ADMIN_TOKEN=%s\n' "$ADMIN_TOKEN" | ssh -i ~/.ssh/ec2.pem -o StrictHostKeyChecking=accept-new "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
             'umask 077; cat > /tmp/nexa-api.env; sudo mkdir -p /opt/nexa; sudo mv /tmp/nexa-api.env /opt/nexa/admin.env; sudo chmod 600 /opt/nexa/admin.env'
       - name: Despliegue blue green sin interrupción HTTP
         env:
-          IMAGE: ${{ needs.publish.outputs.image }}
+          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/nexa-api:${{ github.sha }}
         shell: bash
         run: |
-          ssh "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" "IMAGE='$IMAGE' bash -s" < practica-devops/deploy/deploy-blue-green.sh
+          ssh -i ~/.ssh/ec2.pem -o StrictHostKeyChecking=accept-new "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" "IMAGE='$IMAGE' bash -s" < practica-devops/deploy/deploy-blue-green.sh
