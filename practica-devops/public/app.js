@@ -16,7 +16,9 @@ async function init() {
   });
   select.addEventListener('change', () => { document.querySelector('#body').value = JSON.stringify(operations[select.value].body || {}, null, 2); });
   const health = await (await fetch('/api/health')).json();
-  document.querySelector('#health').textContent = health.statusCode === 200 ? 'Servicio activo · SQLite conectado' : 'Servicio no disponible';
+  document.querySelector('#health').textContent = health.statusCode === 200
+    ? health.data[0].message
+    : 'Servicio no disponible';
 }
 document.querySelector('#send').addEventListener('click', async event => {
   const op = operations[select.value]; if (!op) return;

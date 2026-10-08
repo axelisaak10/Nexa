@@ -118,6 +118,10 @@
       "Health": {
         "type": "object",
         "properties": {
+          "message": {
+            "type": "string",
+            "example": "Backend cargado correctamente"
+          },
           "service": {
             "type": "string"
           },
@@ -126,6 +130,7 @@
           }
         },
         "required": [
+          "message",
           "service",
           "database"
         ],
