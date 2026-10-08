@@ -126,12 +126,7 @@ export function createApp({ dataDir = process.env.DATA_DIR || join(here, 'data')
       }
       if (method === 'GET' && path === '/api/health') {
         db.prepare('SELECT 1').get();
-        res.writeHead(200, {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'no-store',
-          'X-Content-Type-Options': 'nosniff'
-        });
-        return res.end('hola');
+        return send(res, 200, [{ message: 'hola' }]);
       }
       const collection = path.match(/^\/api\/(categories|products)(?:\/([^/]+))?$/);
       if (collection) {

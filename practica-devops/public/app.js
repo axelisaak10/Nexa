@@ -15,9 +15,9 @@ async function init() {
     document.querySelector('#routes').append(row);
   });
   select.addEventListener('change', () => { document.querySelector('#body').value = JSON.stringify(operations[select.value].body || {}, null, 2); });
-  const health = await fetch('/api/health');
-  document.querySelector('#health').textContent = health.ok
-    ? await health.text()
+  const health = await (await fetch('/api/health')).json();
+  document.querySelector('#health').textContent = health.statusCode === 200
+    ? health.data[0].message
     : 'Servicio no disponible';
 }
 document.querySelector('#send').addEventListener('click', async event => {
