@@ -198,29 +198,12 @@
         "summary": "Estado del servicio",
         "responses": {
           "200": {
-            "description": "Health",
+            "description": "Texto de estado",
             "content": {
-              "application/json": {
+              "text/plain": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "statusCode": {
-                      "type": "integer",
-                      "minimum": 100,
-                      "maximum": 599
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Health"
-                      }
-                    }
-                  },
-                  "required": [
-                    "statusCode",
-                    "data"
-                  ],
-                  "additionalProperties": false
+                  "type": "string",
+                  "example": "hola"
                 }
               }
             }

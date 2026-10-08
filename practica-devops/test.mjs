@@ -29,9 +29,10 @@ test('Integración de 12 endpoints, errores, respaldo y persistencia', async t =
   };
   let category, product, backup;
   await t.test('hola bro', async () => {
-    const health = (await request('GET', '/api/health'))[0];
-    assert.equal(health.database, 'sqlite-ok');
-    assert.equal(health.message, 'Backend cargado correctamente');
+    const health = await fetch(base + '/api/health');
+    assert.equal(health.status, 200);
+    assert.match(health.headers.get('content-type'), /^text\/plain/);
+    assert.equal(await health.text(), 'hola');
     const spec = await (await fetch(base + '/openapi.json')).json();
     assert.equal(Object.values(spec.paths).flatMap(Object.keys).length, 12);
     assert.equal(endpoints.length, 12);
