@@ -1,0 +1,11 @@
+data/
+.env
+evidencias/*.log
+evidencias/render/
+__pycache__/
+tmp/
+evidencias/render-word-qa/
+evidencias/render-word-qa2/
+deploy/*.b64
+deploy/*.tar.gz
+Entrega_practica_DevOps.zip

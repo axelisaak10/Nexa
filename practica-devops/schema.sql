@@ -1,0 +1,12 @@
+PRAGMA foreign_keys = ON;
+CREATE TABLE IF NOT EXISTS categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL COLLATE NOCASE UNIQUE CHECK(length(trim(name)) BETWEEN 1 AND 80)
+) STRICT;
+CREATE TABLE IF NOT EXISTS products (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL CHECK(length(trim(name)) BETWEEN 1 AND 120),
+  price_cents INTEGER NOT NULL CHECK(price_cents >= 0),
+  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE RESTRICT
+) STRICT;
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);

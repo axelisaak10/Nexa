@@ -1,0 +1,12 @@
+{
+  "name": "nexa-practica-devops",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.16.0" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test test.mjs ci-config.test.mjs",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=70 --test-coverage-functions=70 --test-coverage-branches=70 test.mjs ci-config.test.mjs"
+  }
+}

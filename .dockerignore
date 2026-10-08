@@ -1,0 +1,9 @@
+**
+!practica-devops/
+!practica-devops/package.json
+!practica-devops/server.mjs
+!practica-devops/contracts.mjs
+!practica-devops/schema.sql
+!practica-devops/public/
+!practica-devops/public/**
+!Dockerfile
