@@ -32,6 +32,7 @@ test('Configuración CI/CD del proyecto integrador', async t => {
     for (const name of ['EC2_HOST', 'EC2_USER', 'EC2_SSH_KEY', 'ADMIN_TOKEN']) assert.match(workflow, new RegExp(`secrets\\.${name}`));
     assert.match(workflow, /ssh -i ~\/\.ssh\/ec2\.pem/);
     assert.doesNotMatch(workflow, /EC2_KNOWN_HOSTS/);
+    assert.match(workflow, /install-docker-ubuntu\.sh/);
     assert.doesNotMatch(workflow, /\b(?:\d{1,3}\.){3}\d{1,3}\b/);
   });
   await t.test('Dockerfile usa usuario sin privilegios y healthcheck', () => {

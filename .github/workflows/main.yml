@@ -73,6 +73,12 @@ jobs:
           chmod 700 ~/.ssh
           printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2.pem
           chmod 600 ~/.ssh/ec2.pem
+      - name: Instalar Docker en EC2 si es necesario
+        shell: bash
+        run: |
+          if ! ssh -i ~/.ssh/ec2.pem -o StrictHostKeyChecking=accept-new "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" 'command -v docker >/dev/null 2>&1'; then
+            ssh -i ~/.ssh/ec2.pem -o StrictHostKeyChecking=accept-new "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" 'bash -s' < practica-devops/deploy/install-docker-ubuntu.sh
+          fi
       - name: Guardar secreto de la API en EC2
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
