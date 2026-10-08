@@ -1,0 +1,28 @@
+Comando: node --test --test-reporter spec test.mjs
+Fecha: 1 de octubre de 2026
+
+Suite: Integración de 12 endpoints, errores, respaldo y persistencia
+Pruebas ejecutadas: 17
+Pruebas aprobadas: 17
+Pruebas fallidas: 0
+Pruebas canceladas: 0
+Pruebas omitidas: 0
+
+APROBADA 01 GET health y doce operaciones documentadas
+APROBADA 02 GET categories inicialmente vacío
+APROBADA 03 POST categories
+APROBADA 04 POST products relacionado
+APROBADA 05 GET products
+APROBADA 06 GET products por ID
+APROBADA 07 PUT categories actualiza datos
+APROBADA 08 PUT products actualiza datos
+APROBADA Rechazo de duplicados, FK inválida y eliminación del padre
+APROBADA Esquemas, autorización y errores
+APROBADA 09 POST backup verificable y coherente con WAL
+APROBADA Persistencia al reiniciar
+APROBADA 10 DELETE products
+APROBADA 11 DELETE categories
+APROBADA 12 DELETE database preserva tablas y respaldos
+APROBADA Socket TCP 6061 insert y get comparten la misma SQLite
+
+Resultado final: 17/17 pruebas aprobadas, 0 fallos.

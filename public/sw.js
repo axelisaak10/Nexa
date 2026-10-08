@@ -1,98 +1,41 @@
-const CACHE_NAME = 'nexa-webapp-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/shop',
-  '/about',
-  '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  '/favicon.ico'
-];
+const CACHE_NAME = 'nexa-static-v2';
+const STATIC_ASSETS = ['/manifest.json', '/icons/icon-192x192.png', '/icons/icon-512x512.png', '/favicon.ico'];
 
-// Install Event
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Pre-caching static assets');
-      return cache.addAll(STATIC_ASSETS);
-    }).then(() => self.skipWaiting())
-  );
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => Promise.allSettled(STATIC_ASSETS.map(path => cache.add(path)))).then(() => self.skipWaiting()));
 });
-
-// Activate Event
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
-  );
+self.addEventListener('activate', event => {
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('nexa-') && key !== CACHE_NAME).map(key => caches.delete(key)))).then(() => self.clients.claim()));
 });
-
-// Fetch Event
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-
-  // Network First for API routes
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          return caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) return cachedResponse;
-            return new Response(
-              JSON.stringify({ error: 'Modo offline activo', products: [] }),
-              { headers: { 'Content-Type': 'application/json' } }
-            );
-          });
-        })
-    );
-    return;
-  }
-
-  // Cache First for static resources
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse);
-            });
-          }
-        }).catch(() => {});
-        return cachedResponse;
-      }
-
-      return fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          if (event.request.mode === 'navigate') {
-            return caches.match('/');
-          }
-        });
-    })
-  );
+  // Never cache authenticated responses, orders, API writes or rendered account pages.
+  if (url.origin !== self.location.origin || event.request.method !== 'GET' || url.pathname.startsWith('/api/') || event.request.headers.has('authorization')) return;
+  if (!STATIC_ASSETS.includes(url.pathname) && !url.pathname.startsWith('/_next/static/') && !url.pathname.startsWith('/images/')) return;
+  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+    if (response.ok) { const copy = response.clone(); event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy))); }
+    return response;
+  })));
+});
+self.addEventListener('push', event => {
+  let data = {};
+  try { data = event.data?.json() || {}; } catch { /* Malformed payloads still show a generic update. */ }
+  const path = typeof data.url === 'string' && /^\/tracking\/\d+$/.test(data.url) ? data.url : '/profile';
+  event.waitUntil(self.registration.showNotification(data.title || 'Nexa', {
+    body: data.body || 'Hay una actualización. Consulta tus pedidos.',
+    icon: '/icons/icon-192x192.png',
+    tag: data.tag || 'nexa-update',
+    data: { url: path },
+  }));
+});
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const value = event.notification.data?.url;
+  const path = typeof value === 'string' && /^\/tracking\/\d+$/.test(value) ? value : '/profile';
+  const target = new URL(path, self.location.origin).href;
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async clients => {
+    const existing = clients.find(client => new URL(client.url).origin === self.location.origin);
+    if (existing) { await existing.navigate(target); return existing.focus(); }
+    return self.clients.openWindow(target);
+  }));
 });

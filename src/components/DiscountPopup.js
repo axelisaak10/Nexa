@@ -8,6 +8,12 @@ export default function DiscountPopup() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    const open = () => setIsOpen(true);
+    window.addEventListener('nexa-show-promotions', open);
+    return () => window.removeEventListener('nexa-show-promotions', open);
+  }, []);
+
+  useEffect(() => {
     // Check if user already saw or closed the popup in this session
     const dismissed = sessionStorage.getItem('nexa-discount-dismissed');
     if (!dismissed) {

@@ -1,0 +1,308 @@
+{
+  "info": {
+    "name": "Nexa DevOps EC2 — 10 endpoints",
+    "description": "Solo para la BD dedicada a la práctica. La última petición VACÍA todos los datos. Configura baseUrl y adminToken antes de ejecutar.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://3.15.3.74:8080"
+    },
+    {
+      "key": "adminToken",
+      "value": "devops2026"
+    },
+    {
+      "key": "categoryId",
+      "value": ""
+    },
+    {
+      "key": "productId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Estado del servicio",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/health"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Crear categoría",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Admin-Token",
+            "value": "{{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/categories",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Categoria {{$timestamp}}\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+              "const json = pm.response.json();",
+              "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });",
+              "if (pm.response.code === 201) pm.collectionVariables.set(\"categoryId\", json.data[0].id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Listar categorías",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/categories"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Crear producto",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Admin-Token",
+            "value": "{{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/products",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Teclado\",\"price_cents\":59900,\"category_id\":{{categoryId}}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+              "const json = pm.response.json();",
+              "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });",
+              "if (pm.response.code === 201) pm.collectionVariables.set(\"productId\", json.data[0].id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Listar productos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/products"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Consultar producto",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/products/{{productId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Respaldar SQLite",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Admin-Token",
+            "value": "{{adminToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/database/backup"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Eliminar producto",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "X-Admin-Token",
+            "value": "{{adminToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/products/{{productId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Eliminar categoría sin productos",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "X-Admin-Token",
+            "value": "{{adminToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/categories/{{categoryId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Vaciar datos conservando estructura",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "X-Admin-Token",
+            "value": "{{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/database",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"confirmation\":\"VACIAR\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

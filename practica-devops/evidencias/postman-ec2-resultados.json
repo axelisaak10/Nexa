@@ -1,0 +1,3097 @@
+{
+  "collection": {
+    "item": [
+      {
+        "id": "adfc2a31-eb55-4837-952b-4d7de273acd5",
+        "name": "1. Estado del servicio",
+        "request": {
+          "url": {
+            "path": [
+              "api",
+              "health"
+            ],
+            "host": [
+              "{{baseUrl}}"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "method": "GET"
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "96ab04ce-3d95-43c8-b042-158de04cc60f",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                "const json = pm.response.json();",
+                "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+              ],
+              "_lastExecutionId": "0ac95d32-297e-4390-a9f9-36c87c8c9d76"
+            }
+          }
+        ]
+      },
+      {
+        "id": "a4beb050-6dee-4105-9320-83fdbccce3b0",
+        "name": "2. Crear categoría",
+        "request": {
+          "url": {
+            "path": [
+              "api",
+              "categories"
+            ],
+            "host": [
+              "{{baseUrl}}"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "X-Admin-Token",
+              "value": "{{adminToken}}"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "method": "POST",
+          "body": {
+            "mode": "raw",
+            "raw": "{\"name\":\"Categoria {{$timestamp}}\"}",
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          }
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "c23cbffe-8ae2-46fa-87a5-423e76935191",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                "const json = pm.response.json();",
+                "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });",
+                "if (pm.response.code === 201) pm.collectionVariables.set(\"categoryId\", json.data[0].id);"
+              ],
+              "_lastExecutionId": "0bb6f758-7c30-495a-b4d0-08d60bcbdc66"
+            }
+          }
+        ]
+      },
+      {
+        "id": "cf72947c-7ac0-4613-8472-3b33e16e525f",
+        "name": "3. Listar categorías",
+        "request": {
+          "url": {
+            "path": [
+              "api",
+              "categories"
+            ],
+            "host": [
+              "{{baseUrl}}"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "method": "GET"
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "9ddf3b3b-ffce-4f20-8f40-a31952cba84e",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                "const json = pm.response.json();",
+                "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+              ],
+              "_lastExecutionId": "c685a304-854d-497c-be88-8bbc4e311425"
+            }
+          }
+        ]
+      },
+      {
+        "id": "ed11f887-87fa-4de7-944c-04332697eeb1",
+        "name": "4. Crear producto",
+        "request": {
+          "url": {
+            "path": [
+              "api",
+              "products"
+            ],
+            "host": [
+              "{{baseUrl}}"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "X-Admin-Token",
+              "value": "{{adminToken}}"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "method": "POST",
+          "body": {
+            "mode": "raw",
+            "raw": "{\"name\":\"Teclado\",\"price_cents\":59900,\"category_id\":{{categoryId}}}",
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          }
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "3f1ae962-0d4c-4c58-a893-9917a81f524a",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                "const json = pm.response.json();",
+                "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });",
+                "if (pm.response.code === 201) pm.collectionVariables.set(\"productId\", json.data[0].id);"
+              ],
+              "_lastExecutionId": "3ddf9429-603d-457a-a8dc-eb45368435df"
+            }
+          }
+        ]
+      },
+      {
+        "id": "c443e67e-140c-4ea8-a804-50eb05337c49",
+        "name": "5. Listar productos",
+        "request": {
+          "url": {
+            "path": [
+              "api",
+              "products"
+            ],
+            "host": [
+              "{{baseUrl}}"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "method": "GET"
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "ff8100f5-912f-4e10-bfe0-01690b5e4bb3",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                "const json = pm.response.json();",
+                "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+              ],
+              "_lastExecutionId": "3b7143b8-5237-42fc-bbd1-e42979cc0aaf"
+            }
+          }
+        ]
+      },
+      {
+        "id": "7a33b862-7f3c-45e5-841a-1f6d2848d24b",
+        "name": "6. Consultar producto",
+        "request": {
+          "url": {
+            "path": [
+              "api",
+              "products",
+              "{{productId}}"
+            ],
+            "host": [
+              "{{baseUrl}}"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "method": "GET"
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "36411921-c716-4ae2-aa2d-a4e9373dd1c2",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                "const json = pm.response.json();",
+                "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+              ],
+              "_lastExecutionId": "5e876c1a-a88a-450c-81e7-8ce360b5f33d"
+            }
+          }
+        ]
+      },
+      {
+        "id": "626440ee-503a-4d0c-8858-fd98b9570a8f",
+        "name": "7. Respaldar SQLite",
+        "request": {
+          "url": {
+            "path": [
+              "api",
+              "database",
+              "backup"
+            ],
+            "host": [
+              "{{baseUrl}}"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "X-Admin-Token",
+              "value": "{{adminToken}}"
+            }
+          ],
+          "method": "POST"
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "63d3063b-2651-430c-a728-8248e5b8bb9f",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                "const json = pm.response.json();",
+                "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+              ],
+              "_lastExecutionId": "f975f9a3-fcf5-47e7-ae64-afbbd871ef73"
+            }
+          }
+        ]
+      },
+      {
+        "id": "08d067f7-c45d-4344-a664-40a26ad6e8de",
+        "name": "8. Eliminar producto",
+        "request": {
+          "url": {
+            "path": [
+              "api",
+              "products",
+              "{{productId}}"
+            ],
+            "host": [
+              "{{baseUrl}}"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "X-Admin-Token",
+              "value": "{{adminToken}}"
+            }
+          ],
+          "method": "DELETE"
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "57556dd6-e433-4099-b692-0a07ce0fa91b",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                "const json = pm.response.json();",
+                "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+              ],
+              "_lastExecutionId": "7bd2ba3e-335a-4e89-890f-6ca8dd04c862"
+            }
+          }
+        ]
+      },
+      {
+        "id": "852cc807-61c6-4a99-9751-25b23fc7cce7",
+        "name": "9. Eliminar categoría sin productos",
+        "request": {
+          "url": {
+            "path": [
+              "api",
+              "categories",
+              "{{categoryId}}"
+            ],
+            "host": [
+              "{{baseUrl}}"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "X-Admin-Token",
+              "value": "{{adminToken}}"
+            }
+          ],
+          "method": "DELETE"
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "edc3652e-aa7e-4d18-8d40-b3e236753d28",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                "const json = pm.response.json();",
+                "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+              ],
+              "_lastExecutionId": "20ba967f-2614-47f2-acc9-69c5cddf9b34"
+            }
+          }
+        ]
+      },
+      {
+        "id": "a3c040f0-d850-4d08-a6ae-257afd1f2ad1",
+        "name": "10. Vaciar datos conservando estructura",
+        "request": {
+          "url": {
+            "path": [
+              "api",
+              "database"
+            ],
+            "host": [
+              "{{baseUrl}}"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "X-Admin-Token",
+              "value": "{{adminToken}}"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "method": "DELETE",
+          "body": {
+            "mode": "raw",
+            "raw": "{\"confirmation\":\"VACIAR\"}",
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          }
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "727c735c-c575-48b1-bd50-bc5a6ba599f4",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                "const json = pm.response.json();",
+                "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+              ],
+              "_lastExecutionId": "8e5b01d9-4497-4ec9-b536-825ca2841ef6"
+            }
+          }
+        ]
+      }
+    ],
+    "event": [],
+    "variable": [
+      {
+        "type": "any",
+        "value": "http://localhost:8080",
+        "key": "baseUrl"
+      },
+      {
+        "type": "any",
+        "value": "",
+        "key": "adminToken"
+      },
+      {
+        "type": "any",
+        "value": "",
+        "key": "categoryId"
+      },
+      {
+        "type": "any",
+        "value": "",
+        "key": "productId"
+      }
+    ],
+    "info": {
+      "_postman_id": "4ae802e2-de60-4839-b7b1-77e3a8867ea6",
+      "name": "Nexa DevOps — 10 endpoints",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+      "description": {
+        "content": "Solo para la BD dedicada a la práctica. La última petición VACÍA todos los datos. Configura baseUrl y adminToken antes de ejecutar.",
+        "type": "text/plain"
+      }
+    }
+  },
+  "environment": {
+    "id": "dd25f990-a79b-42ef-949f-2a86bd69c574",
+    "values": [
+      {
+        "type": "any",
+        "value": "http://3.15.3.74:8080",
+        "key": "baseUrl"
+      },
+      {
+        "type": "any",
+        "value": "devops2026",
+        "key": "adminToken"
+      }
+    ]
+  },
+  "globals": {
+    "id": "1edb461d-1590-4429-b1dc-17da44760dff",
+    "values": []
+  },
+  "run": {
+    "stats": {
+      "iterations": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "items": {
+        "total": 10,
+        "pending": 0,
+        "failed": 0
+      },
+      "scripts": {
+        "total": 10,
+        "pending": 0,
+        "failed": 0
+      },
+      "prerequests": {
+        "total": 10,
+        "pending": 0,
+        "failed": 0
+      },
+      "requests": {
+        "total": 10,
+        "pending": 0,
+        "failed": 0
+      },
+      "tests": {
+        "total": 10,
+        "pending": 0,
+        "failed": 0
+      },
+      "assertions": {
+        "total": 20,
+        "pending": 0,
+        "failed": 0
+      },
+      "testScripts": {
+        "total": 10,
+        "pending": 0,
+        "failed": 0
+      },
+      "prerequestScripts": {
+        "total": 0,
+        "pending": 0,
+        "failed": 0
+      }
+    },
+    "timings": {
+      "responseAverage": 103.7,
+      "responseMin": 82,
+      "responseMax": 217,
+      "responseSd": 38.46569900573757,
+      "dnsAverage": 0,
+      "dnsMin": 0,
+      "dnsMax": 0,
+      "dnsSd": 0,
+      "firstByteAverage": 0,
+      "firstByteMin": 0,
+      "firstByteMax": 0,
+      "firstByteSd": 0,
+      "started": 1790191686611,
+      "completed": 1790191688475
+    },
+    "executions": [
+      {
+        "cursor": {
+          "position": 0,
+          "iteration": 0,
+          "length": 10,
+          "cycles": 1,
+          "empty": false,
+          "eof": false,
+          "bof": true,
+          "cr": false,
+          "ref": "93c23dc8-34d6-415e-b484-27a03bcedd5b",
+          "httpRequestId": "edd95e99-ec89-4cea-a3e7-25c623d462a9"
+        },
+        "item": {
+          "id": "adfc2a31-eb55-4837-952b-4d7de273acd5",
+          "name": "1. Estado del servicio",
+          "request": {
+            "url": {
+              "path": [
+                "api",
+                "health"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "method": "GET"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "96ab04ce-3d95-43c8-b042-158de04cc60f",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+                ],
+                "_lastExecutionId": "0ac95d32-297e-4390-a9f9-36c87c8c9d76"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "8080",
+            "path": [
+              "api",
+              "health"
+            ],
+            "host": [
+              "3",
+              "15",
+              "3",
+              "74"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "146bca40-186c-4f28-af29-39fc870052a8",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "3.15.3.74:8080",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            }
+          ],
+          "method": "GET"
+        },
+        "response": {
+          "id": "c8dba0b7-521d-49cf-b216-1f3304be69f0",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 23 Sep 2026 19:28:09 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              115,
+              116,
+              97,
+              116,
+              117,
+              115,
+              67,
+              111,
+              100,
+              101,
+              34,
+              58,
+              50,
+              48,
+              48,
+              44,
+              34,
+              100,
+              97,
+              116,
+              97,
+              34,
+              58,
+              91,
+              123,
+              34,
+              115,
+              101,
+              114,
+              118,
+              105,
+              99,
+              101,
+              34,
+              58,
+              34,
+              110,
+              101,
+              120,
+              97,
+              45,
+              119,
+              101,
+              98,
+              97,
+              112,
+              112,
+              34,
+              44,
+              34,
+              100,
+              97,
+              116,
+              97,
+              98,
+              97,
+              115,
+              101,
+              34,
+              58,
+              34,
+              115,
+              113,
+              108,
+              105,
+              116,
+              101,
+              45,
+              111,
+              107,
+              34,
+              125,
+              93,
+              125
+            ]
+          },
+          "cookie": [],
+          "responseTime": 217,
+          "responseSize": 76
+        },
+        "id": "adfc2a31-eb55-4837-952b-4d7de273acd5",
+        "assertions": [
+          {
+            "assertion": "HTTP 200",
+            "skipped": false
+          },
+          {
+            "assertion": "Envoltura JSON",
+            "skipped": false
+          }
+        ]
+      },
+      {
+        "cursor": {
+          "ref": "b7133edf-a154-4b37-894b-7143ae2401f0",
+          "length": 10,
+          "cycles": 1,
+          "position": 1,
+          "iteration": 0,
+          "httpRequestId": "892d2b77-44f6-4c13-9a66-043f2890e543"
+        },
+        "item": {
+          "id": "a4beb050-6dee-4105-9320-83fdbccce3b0",
+          "name": "2. Crear categoría",
+          "request": {
+            "url": {
+              "path": [
+                "api",
+                "categories"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Categoria {{$timestamp}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "c23cbffe-8ae2-46fa-87a5-423e76935191",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"categoryId\", json.data[0].id);"
+                ],
+                "_lastExecutionId": "0bb6f758-7c30-495a-b4d0-08d60bcbdc66"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "8080",
+            "path": [
+              "api",
+              "categories"
+            ],
+            "host": [
+              "3",
+              "15",
+              "3",
+              "74"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "X-Admin-Token",
+              "value": "devops2026"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "c659e819-a841-4e58-abe6-c208b4d294be",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "3.15.3.74:8080",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            },
+            {
+              "key": "Content-Length",
+              "value": "31",
+              "system": true
+            }
+          ],
+          "method": "POST",
+          "body": {
+            "mode": "raw",
+            "raw": "{\"name\":\"Categoria 1790191687\"}",
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          }
+        },
+        "response": {
+          "id": "b3a0d066-ae1a-48a4-ab47-a723c6b205b3",
+          "status": "Created",
+          "code": 201,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 23 Sep 2026 19:28:09 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              115,
+              116,
+              97,
+              116,
+              117,
+              115,
+              67,
+              111,
+              100,
+              101,
+              34,
+              58,
+              50,
+              48,
+              49,
+              44,
+              34,
+              100,
+              97,
+              116,
+              97,
+              34,
+              58,
+              91,
+              123,
+              34,
+              105,
+              100,
+              34,
+              58,
+              49,
+              44,
+              34,
+              110,
+              97,
+              109,
+              101,
+              34,
+              58,
+              34,
+              67,
+              97,
+              116,
+              101,
+              103,
+              111,
+              114,
+              105,
+              97,
+              32,
+              49,
+              55,
+              57,
+              48,
+              49,
+              57,
+              49,
+              54,
+              56,
+              55,
+              34,
+              125,
+              93,
+              125
+            ]
+          },
+          "cookie": [],
+          "responseTime": 94,
+          "responseSize": 66
+        },
+        "id": "a4beb050-6dee-4105-9320-83fdbccce3b0",
+        "assertions": [
+          {
+            "assertion": "HTTP 201",
+            "skipped": false
+          },
+          {
+            "assertion": "Envoltura JSON",
+            "skipped": false
+          }
+        ]
+      },
+      {
+        "cursor": {
+          "ref": "c34c62a2-14e6-48ce-90fc-99eb80d79af9",
+          "length": 10,
+          "cycles": 1,
+          "position": 2,
+          "iteration": 0,
+          "httpRequestId": "0b536ba4-b060-4e0f-8ed4-83c1f55edabf"
+        },
+        "item": {
+          "id": "cf72947c-7ac0-4613-8472-3b33e16e525f",
+          "name": "3. Listar categorías",
+          "request": {
+            "url": {
+              "path": [
+                "api",
+                "categories"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "method": "GET"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "9ddf3b3b-ffce-4f20-8f40-a31952cba84e",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+                ],
+                "_lastExecutionId": "c685a304-854d-497c-be88-8bbc4e311425"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "8080",
+            "path": [
+              "api",
+              "categories"
+            ],
+            "host": [
+              "3",
+              "15",
+              "3",
+              "74"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "26033dac-dab0-4cdc-bbdf-7005f15ca2ec",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "3.15.3.74:8080",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            }
+          ],
+          "method": "GET"
+        },
+        "response": {
+          "id": "141e2cc2-c81a-4588-ae9b-a9758f4213e6",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 23 Sep 2026 19:28:10 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              115,
+              116,
+              97,
+              116,
+              117,
+              115,
+              67,
+              111,
+              100,
+              101,
+              34,
+              58,
+              50,
+              48,
+              48,
+              44,
+              34,
+              100,
+              97,
+              116,
+              97,
+              34,
+              58,
+              91,
+              123,
+              34,
+              105,
+              100,
+              34,
+              58,
+              49,
+              44,
+              34,
+              110,
+              97,
+              109,
+              101,
+              34,
+              58,
+              34,
+              67,
+              97,
+              116,
+              101,
+              103,
+              111,
+              114,
+              105,
+              97,
+              32,
+              49,
+              55,
+              57,
+              48,
+              49,
+              57,
+              49,
+              54,
+              56,
+              55,
+              34,
+              125,
+              93,
+              125
+            ]
+          },
+          "cookie": [],
+          "responseTime": 86,
+          "responseSize": 66
+        },
+        "id": "cf72947c-7ac0-4613-8472-3b33e16e525f",
+        "assertions": [
+          {
+            "assertion": "HTTP 200",
+            "skipped": false
+          },
+          {
+            "assertion": "Envoltura JSON",
+            "skipped": false
+          }
+        ]
+      },
+      {
+        "cursor": {
+          "ref": "533981ee-4ccd-4d81-a840-fd40fdb29294",
+          "length": 10,
+          "cycles": 1,
+          "position": 3,
+          "iteration": 0,
+          "httpRequestId": "c88054c5-99de-495f-b7b7-98eec1887bea"
+        },
+        "item": {
+          "id": "ed11f887-87fa-4de7-944c-04332697eeb1",
+          "name": "4. Crear producto",
+          "request": {
+            "url": {
+              "path": [
+                "api",
+                "products"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Teclado\",\"price_cents\":59900,\"category_id\":{{categoryId}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "3f1ae962-0d4c-4c58-a893-9917a81f524a",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"productId\", json.data[0].id);"
+                ],
+                "_lastExecutionId": "3ddf9429-603d-457a-a8dc-eb45368435df"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "8080",
+            "path": [
+              "api",
+              "products"
+            ],
+            "host": [
+              "3",
+              "15",
+              "3",
+              "74"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "X-Admin-Token",
+              "value": "devops2026"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "940766db-4029-4709-84cc-44fa01b2096f",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "3.15.3.74:8080",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            },
+            {
+              "key": "Content-Length",
+              "value": "54",
+              "system": true
+            }
+          ],
+          "method": "POST",
+          "body": {
+            "mode": "raw",
+            "raw": "{\"name\":\"Teclado\",\"price_cents\":59900,\"category_id\":1}",
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          }
+        },
+        "response": {
+          "id": "524e6076-b33c-47d8-a148-24f374c58c28",
+          "status": "Created",
+          "code": 201,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 23 Sep 2026 19:28:10 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              115,
+              116,
+              97,
+              116,
+              117,
+              115,
+              67,
+              111,
+              100,
+              101,
+              34,
+              58,
+              50,
+              48,
+              49,
+              44,
+              34,
+              100,
+              97,
+              116,
+              97,
+              34,
+              58,
+              91,
+              123,
+              34,
+              105,
+              100,
+              34,
+              58,
+              49,
+              44,
+              34,
+              110,
+              97,
+              109,
+              101,
+              34,
+              58,
+              34,
+              84,
+              101,
+              99,
+              108,
+              97,
+              100,
+              111,
+              34,
+              44,
+              34,
+              112,
+              114,
+              105,
+              99,
+              101,
+              95,
+              99,
+              101,
+              110,
+              116,
+              115,
+              34,
+              58,
+              53,
+              57,
+              57,
+              48,
+              48,
+              44,
+              34,
+              99,
+              97,
+              116,
+              101,
+              103,
+              111,
+              114,
+              121,
+              95,
+              105,
+              100,
+              34,
+              58,
+              49,
+              125,
+              93,
+              125
+            ]
+          },
+          "cookie": [],
+          "responseTime": 82,
+          "responseSize": 89
+        },
+        "id": "ed11f887-87fa-4de7-944c-04332697eeb1",
+        "assertions": [
+          {
+            "assertion": "HTTP 201",
+            "skipped": false
+          },
+          {
+            "assertion": "Envoltura JSON",
+            "skipped": false
+          }
+        ]
+      },
+      {
+        "cursor": {
+          "ref": "d60e8f7d-1568-4e25-954c-6ff82217a740",
+          "length": 10,
+          "cycles": 1,
+          "position": 4,
+          "iteration": 0,
+          "httpRequestId": "728e4cdb-268a-4917-950f-bf6bbc57a88f"
+        },
+        "item": {
+          "id": "c443e67e-140c-4ea8-a804-50eb05337c49",
+          "name": "5. Listar productos",
+          "request": {
+            "url": {
+              "path": [
+                "api",
+                "products"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "method": "GET"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "ff8100f5-912f-4e10-bfe0-01690b5e4bb3",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+                ],
+                "_lastExecutionId": "3b7143b8-5237-42fc-bbd1-e42979cc0aaf"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "8080",
+            "path": [
+              "api",
+              "products"
+            ],
+            "host": [
+              "3",
+              "15",
+              "3",
+              "74"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "b76604e9-8f01-40ba-aacc-2f6b20dc8fbd",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "3.15.3.74:8080",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            }
+          ],
+          "method": "GET"
+        },
+        "response": {
+          "id": "ac688551-6e22-4d72-bd38-e1a43cc02a73",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 23 Sep 2026 19:28:10 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              115,
+              116,
+              97,
+              116,
+              117,
+              115,
+              67,
+              111,
+              100,
+              101,
+              34,
+              58,
+              50,
+              48,
+              48,
+              44,
+              34,
+              100,
+              97,
+              116,
+              97,
+              34,
+              58,
+              91,
+              123,
+              34,
+              105,
+              100,
+              34,
+              58,
+              49,
+              44,
+              34,
+              110,
+              97,
+              109,
+              101,
+              34,
+              58,
+              34,
+              84,
+              101,
+              99,
+              108,
+              97,
+              100,
+              111,
+              34,
+              44,
+              34,
+              112,
+              114,
+              105,
+              99,
+              101,
+              95,
+              99,
+              101,
+              110,
+              116,
+              115,
+              34,
+              58,
+              53,
+              57,
+              57,
+              48,
+              48,
+              44,
+              34,
+              99,
+              97,
+              116,
+              101,
+              103,
+              111,
+              114,
+              121,
+              95,
+              105,
+              100,
+              34,
+              58,
+              49,
+              125,
+              93,
+              125
+            ]
+          },
+          "cookie": [],
+          "responseTime": 100,
+          "responseSize": 89
+        },
+        "id": "c443e67e-140c-4ea8-a804-50eb05337c49",
+        "assertions": [
+          {
+            "assertion": "HTTP 200",
+            "skipped": false
+          },
+          {
+            "assertion": "Envoltura JSON",
+            "skipped": false
+          }
+        ]
+      },
+      {
+        "cursor": {
+          "ref": "9a7fb7aa-4bd9-4671-a6e9-702fc9f42786",
+          "length": 10,
+          "cycles": 1,
+          "position": 5,
+          "iteration": 0,
+          "httpRequestId": "28040a91-2ae7-47ee-83d9-98bfc54f19b4"
+        },
+        "item": {
+          "id": "7a33b862-7f3c-45e5-841a-1f6d2848d24b",
+          "name": "6. Consultar producto",
+          "request": {
+            "url": {
+              "path": [
+                "api",
+                "products",
+                "{{productId}}"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "method": "GET"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "36411921-c716-4ae2-aa2d-a4e9373dd1c2",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+                ],
+                "_lastExecutionId": "5e876c1a-a88a-450c-81e7-8ce360b5f33d"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "8080",
+            "path": [
+              "api",
+              "products",
+              "1"
+            ],
+            "host": [
+              "3",
+              "15",
+              "3",
+              "74"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "461fcba8-a65b-4480-8f58-ca1dcd61e8e5",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "3.15.3.74:8080",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            }
+          ],
+          "method": "GET"
+        },
+        "response": {
+          "id": "e1e8d494-eefb-4c2c-bd53-18a54e6c0d15",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 23 Sep 2026 19:28:10 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              115,
+              116,
+              97,
+              116,
+              117,
+              115,
+              67,
+              111,
+              100,
+              101,
+              34,
+              58,
+              50,
+              48,
+              48,
+              44,
+              34,
+              100,
+              97,
+              116,
+              97,
+              34,
+              58,
+              91,
+              123,
+              34,
+              105,
+              100,
+              34,
+              58,
+              49,
+              44,
+              34,
+              110,
+              97,
+              109,
+              101,
+              34,
+              58,
+              34,
+              84,
+              101,
+              99,
+              108,
+              97,
+              100,
+              111,
+              34,
+              44,
+              34,
+              112,
+              114,
+              105,
+              99,
+              101,
+              95,
+              99,
+              101,
+              110,
+              116,
+              115,
+              34,
+              58,
+              53,
+              57,
+              57,
+              48,
+              48,
+              44,
+              34,
+              99,
+              97,
+              116,
+              101,
+              103,
+              111,
+              114,
+              121,
+              95,
+              105,
+              100,
+              34,
+              58,
+              49,
+              125,
+              93,
+              125
+            ]
+          },
+          "cookie": [],
+          "responseTime": 87,
+          "responseSize": 89
+        },
+        "id": "7a33b862-7f3c-45e5-841a-1f6d2848d24b",
+        "assertions": [
+          {
+            "assertion": "HTTP 200",
+            "skipped": false
+          },
+          {
+            "assertion": "Envoltura JSON",
+            "skipped": false
+          }
+        ]
+      },
+      {
+        "cursor": {
+          "ref": "7a3929e7-eaa4-49be-82f8-50d760fa39bf",
+          "length": 10,
+          "cycles": 1,
+          "position": 6,
+          "iteration": 0,
+          "httpRequestId": "9fa10bd0-aff2-42bc-a985-8ebc8a0ff68e"
+        },
+        "item": {
+          "id": "626440ee-503a-4d0c-8858-fd98b9570a8f",
+          "name": "7. Respaldar SQLite",
+          "request": {
+            "url": {
+              "path": [
+                "api",
+                "database",
+                "backup"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "method": "POST"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "63d3063b-2651-430c-a728-8248e5b8bb9f",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+                ],
+                "_lastExecutionId": "f975f9a3-fcf5-47e7-ae64-afbbd871ef73"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "8080",
+            "path": [
+              "api",
+              "database",
+              "backup"
+            ],
+            "host": [
+              "3",
+              "15",
+              "3",
+              "74"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "X-Admin-Token",
+              "value": "devops2026"
+            },
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "5b0f7712-fa3f-4e6f-a494-9d5d99013732",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "3.15.3.74:8080",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            },
+            {
+              "key": "Content-Length",
+              "value": "0",
+              "system": true
+            }
+          ],
+          "method": "POST"
+        },
+        "response": {
+          "id": "89501746-9b57-45ce-a492-61224540eae5",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 23 Sep 2026 19:28:10 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              115,
+              116,
+              97,
+              116,
+              117,
+              115,
+              67,
+              111,
+              100,
+              101,
+              34,
+              58,
+              50,
+              48,
+              48,
+              44,
+              34,
+              100,
+              97,
+              116,
+              97,
+              34,
+              58,
+              91,
+              123,
+              34,
+              102,
+              105,
+              108,
+              101,
+              110,
+              97,
+              109,
+              101,
+              34,
+              58,
+              34,
+              98,
+              97,
+              99,
+              107,
+              117,
+              112,
+              45,
+              50,
+              48,
+              50,
+              54,
+              45,
+              48,
+              57,
+              45,
+              50,
+              51,
+              84,
+              49,
+              57,
+              45,
+              50,
+              56,
+              45,
+              49,
+              48,
+              45,
+              55,
+              48,
+              50,
+              90,
+              45,
+              50,
+              51,
+              57,
+              56,
+              102,
+              54,
+              51,
+              50,
+              45,
+              49,
+              55,
+              57,
+              53,
+              45,
+              52,
+              102,
+              52,
+              57,
+              45,
+              57,
+              98,
+              102,
+              56,
+              45,
+              97,
+              57,
+              50,
+              54,
+              49,
+              101,
+              100,
+              53,
+              57,
+              51,
+              48,
+              50,
+              46,
+              115,
+              113,
+              108,
+              105,
+              116,
+              101,
+              34,
+              44,
+              34,
+              98,
+              121,
+              116,
+              101,
+              115,
+              34,
+              58,
+              50,
+              52,
+              53,
+              55,
+              54,
+              125,
+              93,
+              125
+            ]
+          },
+          "cookie": [],
+          "responseTime": 95,
+          "responseSize": 132
+        },
+        "id": "626440ee-503a-4d0c-8858-fd98b9570a8f",
+        "assertions": [
+          {
+            "assertion": "HTTP 200",
+            "skipped": false
+          },
+          {
+            "assertion": "Envoltura JSON",
+            "skipped": false
+          }
+        ]
+      },
+      {
+        "cursor": {
+          "ref": "7b735479-a71b-4f75-8c37-6a0cc3ac3853",
+          "length": 10,
+          "cycles": 1,
+          "position": 7,
+          "iteration": 0,
+          "httpRequestId": "7d8c435d-244f-4680-aa95-fdc6635370e4"
+        },
+        "item": {
+          "id": "08d067f7-c45d-4344-a664-40a26ad6e8de",
+          "name": "8. Eliminar producto",
+          "request": {
+            "url": {
+              "path": [
+                "api",
+                "products",
+                "{{productId}}"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "method": "DELETE"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "57556dd6-e433-4099-b692-0a07ce0fa91b",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+                ],
+                "_lastExecutionId": "7bd2ba3e-335a-4e89-890f-6ca8dd04c862"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "8080",
+            "path": [
+              "api",
+              "products",
+              "1"
+            ],
+            "host": [
+              "3",
+              "15",
+              "3",
+              "74"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "X-Admin-Token",
+              "value": "devops2026"
+            },
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "994ade03-6157-4643-a74e-7e08999193e3",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "3.15.3.74:8080",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            }
+          ],
+          "method": "DELETE"
+        },
+        "response": {
+          "id": "02c5278d-c528-4ec8-823b-16dc9715d876",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 23 Sep 2026 19:28:10 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              115,
+              116,
+              97,
+              116,
+              117,
+              115,
+              67,
+              111,
+              100,
+              101,
+              34,
+              58,
+              50,
+              48,
+              48,
+              44,
+              34,
+              100,
+              97,
+              116,
+              97,
+              34,
+              58,
+              91,
+              123,
+              34,
+              105,
+              100,
+              34,
+              58,
+              49,
+              44,
+              34,
+              110,
+              97,
+              109,
+              101,
+              34,
+              58,
+              34,
+              84,
+              101,
+              99,
+              108,
+              97,
+              100,
+              111,
+              34,
+              44,
+              34,
+              112,
+              114,
+              105,
+              99,
+              101,
+              95,
+              99,
+              101,
+              110,
+              116,
+              115,
+              34,
+              58,
+              53,
+              57,
+              57,
+              48,
+              48,
+              44,
+              34,
+              99,
+              97,
+              116,
+              101,
+              103,
+              111,
+              114,
+              121,
+              95,
+              105,
+              100,
+              34,
+              58,
+              49,
+              125,
+              93,
+              125
+            ]
+          },
+          "cookie": [],
+          "responseTime": 83,
+          "responseSize": 89
+        },
+        "id": "08d067f7-c45d-4344-a664-40a26ad6e8de",
+        "assertions": [
+          {
+            "assertion": "HTTP 200",
+            "skipped": false
+          },
+          {
+            "assertion": "Envoltura JSON",
+            "skipped": false
+          }
+        ]
+      },
+      {
+        "cursor": {
+          "ref": "2d1616d6-3d6e-4678-a632-686519dee757",
+          "length": 10,
+          "cycles": 1,
+          "position": 8,
+          "iteration": 0,
+          "httpRequestId": "241fd934-b8b4-445c-aada-ae07ec46c04f"
+        },
+        "item": {
+          "id": "852cc807-61c6-4a99-9751-25b23fc7cce7",
+          "name": "9. Eliminar categoría sin productos",
+          "request": {
+            "url": {
+              "path": [
+                "api",
+                "categories",
+                "{{categoryId}}"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "method": "DELETE"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "edc3652e-aa7e-4d18-8d40-b3e236753d28",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+                ],
+                "_lastExecutionId": "20ba967f-2614-47f2-acc9-69c5cddf9b34"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "8080",
+            "path": [
+              "api",
+              "categories",
+              "1"
+            ],
+            "host": [
+              "3",
+              "15",
+              "3",
+              "74"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "X-Admin-Token",
+              "value": "devops2026"
+            },
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "367170c4-b128-4030-9dd3-23b87453edf4",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "3.15.3.74:8080",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            }
+          ],
+          "method": "DELETE"
+        },
+        "response": {
+          "id": "b8f4ab5a-807b-4b87-b596-d63829c4f3ed",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 23 Sep 2026 19:28:11 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              115,
+              116,
+              97,
+              116,
+              117,
+              115,
+              67,
+              111,
+              100,
+              101,
+              34,
+              58,
+              50,
+              48,
+              48,
+              44,
+              34,
+              100,
+              97,
+              116,
+              97,
+              34,
+              58,
+              91,
+              123,
+              34,
+              105,
+              100,
+              34,
+              58,
+              49,
+              44,
+              34,
+              110,
+              97,
+              109,
+              101,
+              34,
+              58,
+              34,
+              67,
+              97,
+              116,
+              101,
+              103,
+              111,
+              114,
+              105,
+              97,
+              32,
+              49,
+              55,
+              57,
+              48,
+              49,
+              57,
+              49,
+              54,
+              56,
+              55,
+              34,
+              125,
+              93,
+              125
+            ]
+          },
+          "cookie": [],
+          "responseTime": 87,
+          "responseSize": 66
+        },
+        "id": "852cc807-61c6-4a99-9751-25b23fc7cce7",
+        "assertions": [
+          {
+            "assertion": "HTTP 200",
+            "skipped": false
+          },
+          {
+            "assertion": "Envoltura JSON",
+            "skipped": false
+          }
+        ]
+      },
+      {
+        "cursor": {
+          "ref": "7b62b1e0-9546-46df-a24e-e39bacfa1f58",
+          "length": 10,
+          "cycles": 1,
+          "position": 9,
+          "iteration": 0,
+          "httpRequestId": "41db1b67-10c1-493e-9012-5dfdc562e675"
+        },
+        "item": {
+          "id": "a3c040f0-d850-4d08-a6ae-257afd1f2ad1",
+          "name": "10. Vaciar datos conservando estructura",
+          "request": {
+            "url": {
+              "path": [
+                "api",
+                "database"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "{{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "DELETE",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"confirmation\":\"VACIAR\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "727c735c-c575-48b1-bd50-bc5a6ba599f4",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Envoltura JSON\", () => { pm.expect(json.statusCode).to.eql(pm.response.code); pm.expect(json.data).to.be.an(\"array\"); pm.expect(Object.keys(json).sort()).to.eql([\"data\",\"statusCode\"]); });"
+                ],
+                "_lastExecutionId": "8e5b01d9-4497-4ec9-b536-825ca2841ef6"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "8080",
+            "path": [
+              "api",
+              "database"
+            ],
+            "host": [
+              "3",
+              "15",
+              "3",
+              "74"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "X-Admin-Token",
+              "value": "devops2026"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "8c9e9ba4-9a26-416b-b7c5-ba84cf58f9f9",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "3.15.3.74:8080",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            },
+            {
+              "key": "Content-Length",
+              "value": "25",
+              "system": true
+            }
+          ],
+          "method": "DELETE",
+          "body": {
+            "mode": "raw",
+            "raw": "{\"confirmation\":\"VACIAR\"}",
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          }
+        },
+        "response": {
+          "id": "f25d172e-ee11-48e3-b1da-0cf6865c605b",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 23 Sep 2026 19:28:11 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              115,
+              116,
+              97,
+              116,
+              117,
+              115,
+              67,
+              111,
+              100,
+              101,
+              34,
+              58,
+              50,
+              48,
+              48,
+              44,
+              34,
+              100,
+              97,
+              116,
+              97,
+              34,
+              58,
+              91,
+              123,
+              34,
+              100,
+              101,
+              108,
+              101,
+              116,
+              101,
+              100,
+              95,
+              112,
+              114,
+              111,
+              100,
+              117,
+              99,
+              116,
+              115,
+              34,
+              58,
+              48,
+              44,
+              34,
+              100,
+              101,
+              108,
+              101,
+              116,
+              101,
+              100,
+              95,
+              99,
+              97,
+              116,
+              101,
+              103,
+              111,
+              114,
+              105,
+              101,
+              115,
+              34,
+              58,
+              48,
+              125,
+              93,
+              125
+            ]
+          },
+          "cookie": [],
+          "responseTime": 106,
+          "responseSize": 73
+        },
+        "id": "a3c040f0-d850-4d08-a6ae-257afd1f2ad1",
+        "assertions": [
+          {
+            "assertion": "HTTP 200",
+            "skipped": false
+          },
+          {
+            "assertion": "Envoltura JSON",
+            "skipped": false
+          }
+        ]
+      }
+    ],
+    "transfers": {
+      "responseTotal": 835
+    },
+    "failures": [],
+    "error": null
+  }
+}

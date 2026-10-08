@@ -28,7 +28,7 @@ test('Integración de 12 endpoints, errores, respaldo y persistencia', async t =
     return json.data;
   };
   let category, product, backup;
-  await t.test('01 GET health y doce operaciones documentadas', async () => {
+  await t.test('hola bro', async () => {
     const health = (await request('GET', '/api/health'))[0];
     assert.equal(health.database, 'sqlite-ok');
     assert.equal(health.message, 'Backend cargado correctamente');

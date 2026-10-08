@@ -1,0 +1,97 @@
+TAP version 13
+# (node:15104) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Integración de los 10 endpoints, integridad, respaldo y persistencia
+    # Subtest: 01 GET health y diez operaciones documentadas
+    ok 1 - 01 GET health y diez operaciones documentadas
+      ---
+      duration_ms: 27.2051
+      type: 'test'
+      ...
+    # Subtest: 02 GET categories inicialmente vacío
+    ok 2 - 02 GET categories inicialmente vacío
+      ---
+      duration_ms: 3.3807
+      type: 'test'
+      ...
+    # Subtest: 03 POST categories
+    ok 3 - 03 POST categories
+      ---
+      duration_ms: 9.5742
+      type: 'test'
+      ...
+    # Subtest: 04 POST products relacionado
+    ok 4 - 04 POST products relacionado
+      ---
+      duration_ms: 5.105
+      type: 'test'
+      ...
+    # Subtest: 05 GET products
+    ok 5 - 05 GET products
+      ---
+      duration_ms: 2.8356
+      type: 'test'
+      ...
+    # Subtest: 06 GET products por ID
+    ok 6 - 06 GET products por ID
+      ---
+      duration_ms: 2.927
+      type: 'test'
+      ...
+    # Subtest: Rechazo de duplicados, FK inválida y eliminación del padre
+    ok 7 - Rechazo de duplicados, FK inválida y eliminación del padre
+      ---
+      duration_ms: 11.8532
+      type: 'test'
+      ...
+    # Subtest: Esquemas, autorización y errores
+    ok 8 - Esquemas, autorización y errores
+      ---
+      duration_ms: 40.5716
+      type: 'test'
+      ...
+    # Subtest: 07 POST backup verificable y coherente con WAL
+    ok 9 - 07 POST backup verificable y coherente con WAL
+      ---
+      duration_ms: 9.0436
+      type: 'test'
+      ...
+    # Subtest: Persistencia al reiniciar
+    ok 10 - Persistencia al reiniciar
+      ---
+      duration_ms: 12.0657
+      type: 'test'
+      ...
+    # Subtest: 08 DELETE products
+    ok 11 - 08 DELETE products
+      ---
+      duration_ms: 7.7555
+      type: 'test'
+      ...
+    # Subtest: 09 DELETE categories
+    ok 12 - 09 DELETE categories
+      ---
+      duration_ms: 2.807
+      type: 'test'
+      ...
+    # Subtest: 10 DELETE database preserva tablas y respaldos
+    ok 13 - 10 DELETE database preserva tablas y respaldos
+      ---
+      duration_ms: 13.1727
+      type: 'test'
+      ...
+    1..13
+ok 1 - Integración de los 10 endpoints, integridad, respaldo y persistencia
+  ---
+  duration_ms: 190.5857
+  type: 'test'
+  ...
+1..1
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 314.4344

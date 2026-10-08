@@ -75,10 +75,19 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(() => {
+    // Remove this browser's subscription when leaving an account on a shared device.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then(async registration => {
+        const subscription = await registration?.pushManager?.getSubscription();
+        if (!subscription) return;
+        await subscription.unsubscribe();
+        await fetch('/api/push', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ endpoint: subscription.endpoint }) });
+      }).catch(() => {});
+    }
     setUser(null);
     setToken(null);
     document.cookie = 'nexa-token=; path=/; max-age=0; SameSite=Lax';
-  }, []);
+  }, [token]);
 
   // Expose fetch wrapper that auto-injects bearer token for backend requests
   const fetchWithAuth = useCallback(async (url, options = {}) => {

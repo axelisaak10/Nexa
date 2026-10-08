@@ -1,0 +1,33 @@
+{
+  "info": {
+    "name": "Nexa EC2 - Verificacion HTTP",
+    "description": "Solicitudes listas para comprobar desde Postman los datos creados mediante Socket TCP 6061.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Estado de SQLite",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://3.15.3.74:8080/api/health"
+      }
+    },
+    {
+      "name": "2. Listar productos insertados por TCP",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://3.15.3.74:8080/api/products"
+      }
+    },
+    {
+      "name": "3. Consultar Producto Demo Clase",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://3.15.3.74:8080/api/products/16"
+      }
+    }
+  ]
+}

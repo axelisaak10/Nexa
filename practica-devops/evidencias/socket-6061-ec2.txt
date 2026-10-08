@@ -1,0 +1,11 @@
+PRUEBA PUBLICA SOCKET TCP EN AWS EC2
+Destino: 3.15.3.74:6061
+Fecha: 2026-09-25 18:33:28 -06:00
+
+> {insert:{"name":"Adaptador TCP EC2","price_cents":6061,"category_id":7}}
+{"statusCode":201,"data":[{"id":5,"name":"Adaptador TCP EC2","price_cents":6061,"category_id":7}]}
+
+> {get:{"name":"Adaptador TCP EC2","price_cents":6061,"category_id":7}}
+{"statusCode":200,"data":[{"id":5,"name":"Adaptador TCP EC2","price_cents":6061,"category_id":7}]}
+
+Resultado: puerto 6061 accesible y datos persistidos en SQLite.

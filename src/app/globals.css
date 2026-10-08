@@ -4054,3 +4054,33 @@ button {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+/* Mobile device tools and delivery tracking */
+.mobile-feature { margin: 20px 0; padding: 20px; border: 1px solid var(--border, #e6dec9); border-radius: 12px; background: #fff; overflow-wrap: anywhere; }
+.mobile-feature h3, .mobile-feature h4 { margin: 0 0 12px; }
+.mobile-feature p { margin: 10px 0; line-height: 1.5; }
+.mobile-feature label { display: block; margin: 12px 0; }
+.mobile-feature button { min-height: 44px; white-space: normal; }
+.mobile-feature button:disabled { opacity: .55; cursor: wait; }
+.mobile-feature input { margin-bottom: 10px; }
+.mobile-help { font-size: .85rem; color: var(--text-secondary, #736b60); }
+.mobile-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 14px 0; }
+.delivery-map { width: 100%; height: 340px; border: 0; border-radius: 8px; }
+.cart-drawer:not(.open) { visibility: hidden; }
+.sidebar:not(.open) { visibility: hidden; }
+.tracking-page { max-width: 960px; padding-left: 24px; padding-right: 24px; }
+#profile-page { padding-left: 24px; padding-right: 24px; }
+@media (max-width: 600px) {
+  .mobile-feature { padding: 14px; }
+  .mobile-actions > button { flex: 1 1 100%; }
+  .delivery-map { height: 270px; }
+  .profile-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 20px !important; }
+  .profile-grid > * { min-width: 0; }
+  .header-inner { padding: 0 10px; gap: 6px; }
+  .header-actions { gap: 4px; }
+  .header-logo { font-size: 1.2rem; letter-spacing: 1px; }
+  .header-profile-avatar-btn { padding: 5px; }
+  .header-profile-avatar-btn .profile-user-name, .header-profile-avatar-btn .profile-chevron { display: none; }
+  .header-studio-btn { padding: 6px; font-size: .6rem; }
+  .header-studio-btn span { display: none; }
+  .header-nav-btn { padding: 6px; font-size: .65rem; }
+}

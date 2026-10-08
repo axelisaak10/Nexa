@@ -191,7 +191,10 @@ export default function DashboardPage() {
       const data = await res.json();
       if (data.success) {
         showToast(`Pedido #${id_pedido} actualizado a: ${nuevoEstado}`, 'success');
+        if (data.notifications?.failed) showToast('El pedido se guardó, pero alguna alerta no pudo enviarse.', 'error');
         fetchDashboardData();
+      } else {
+        showToast(data.error || 'No se pudo actualizar el pedido.', 'error');
       }
     } catch (e) {
       showToast('Error al actualizar estado del pedido', 'error');
@@ -627,11 +630,14 @@ export default function DashboardPage() {
                             onChange={(e) => handleUpdateOrderStatus(o.id_pedido, e.target.value)}
                             style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}
                           >
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Confirmado">Confirmado</option>
                             <option value="En Proceso">En Proceso</option>
                             <option value="Enviado">Enviado</option>
                             <option value="Entregado">Entregado</option>
                             <option value="Cancelado">Cancelado</option>
                           </select>
+                          <Link href={`/tracking/${o.id_pedido}`} style={{ display: 'block', marginTop: '8px' }}>Seguimiento y ubicación</Link>
                         </td>
                       </tr>
                     ))}

@@ -6,6 +6,7 @@ import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import LocationAddress from '@/components/LocationAddress';
 
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart, mounted, closeDrawer } = useCart();
@@ -156,6 +157,7 @@ export default function CheckoutPage() {
           <h1 className="checkout-success-title">¡Orden Confirmada!</h1>
           <p className="checkout-success-text">Gracias por tu compra. Tu número de pedido es:</p>
           <div className="checkout-success-id-box">#{orderId}</div>
+          {user && <button className="btn-secondary" onClick={() => router.push(`/tracking/${orderId}`)}>Ver seguimiento del pedido</button>}
           <p className="checkout-success-subtext">Hemos recibido tu pago y estamos preparando tus objetos curados.</p>
           <button onClick={() => router.push('/shop')} className="btn-primary" style={{ marginTop: '24px' }}>
             CONTINUAR COMPRANDO
@@ -249,6 +251,7 @@ export default function CheckoutPage() {
                 )}
               </div>
               <div className="checkout-form-group">
+                <LocationAddress onApply={address => setForm(prev => ({ ...prev, ...Object.fromEntries(Object.entries(address).filter(([, value]) => value)) }))} />
                 <label className="checkout-label" htmlFor="calle_numero">Calle y Número</label>
                 <input
                   className="checkout-input"

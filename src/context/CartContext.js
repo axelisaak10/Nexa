@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
+import { hapticFeedback } from '@/lib/mobile';
 
 const CartContext = createContext(null);
 
@@ -55,6 +56,7 @@ export function CartProvider({ children }) {
     });
 
     showToast(`Añadido ${product.nombre} al carrito`, 'success');
+    hapticFeedback();
     setIsDrawerOpen(true);
 
     // Sync to DB
@@ -76,6 +78,7 @@ export function CartProvider({ children }) {
     setItems(prev => prev.filter(i => i.id_producto !== productId));
     if (item) {
       showToast(`Eliminado ${item.nombre} del carrito`, 'success');
+      hapticFeedback();
     }
 
     if (user) {

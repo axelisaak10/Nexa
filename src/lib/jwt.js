@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+    import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'nexa-default-secret-key-change-in-production';
 

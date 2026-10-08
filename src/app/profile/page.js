@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import PinPad from '@/components/PinPad';
+import LocationAddress from '@/components/LocationAddress';
+import PushPreferences from '@/components/PushPreferences';
+import MobileDeviceSettings from '@/components/MobileDeviceSettings';
 
 export default function ProfilePage() {
   const { user, fetchWithAuth } = useAuth();
@@ -187,6 +190,7 @@ export default function ProfilePage() {
 
           {isEditing ? (
             <form onSubmit={handleProfileSubmit}>
+              <LocationAddress onApply={address => setProfileForm(prev => ({ ...prev, ...Object.fromEntries(Object.entries(address).filter(([, value]) => value)) }))} />
               <div style={{ marginBottom: '14px' }}>
                 <label className="auth-label">Nombre Completo</label>
                 <input
@@ -341,6 +345,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div style={{ borderTop: '1px dashed #E5DCD0', paddingTop: '12px', marginBottom: '12px' }}>
+                    <Link href={`/tracking/${pedido.id_pedido}`}>Ver seguimiento de este pedido</Link>
                     {pedido.detalles_pedido?.map((det, idx) => (
                       <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '4px' }}>
                         <span>{det.cantidad}x {det.productos?.nombre || 'Producto'}</span>
@@ -362,6 +367,8 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      <PushPreferences />
+      <MobileDeviceSettings />
       {/* MODAL CONFIGURACIÓN DE PIN */}
       {showPinModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
