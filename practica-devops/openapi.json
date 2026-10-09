@@ -215,7 +215,7 @@
                         "properties": {
                           "message": {
                             "type": "string",
-                            "example": "hola"
+                            "example": "cat"
                           }
                         },
                         "required": [
