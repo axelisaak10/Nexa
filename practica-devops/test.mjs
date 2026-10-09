@@ -28,7 +28,7 @@ test('Integración de 12 endpoints, errores, respaldo y persistencia', async t =
     return json.data;
   };
   let category, product, backup;
-  await t.test('hola bro', async () => {
+  await t.test('cat', async () => {
     const health = (await request('GET', '/api/health'))[0];
     assert.deepEqual(health, { message: 'hola' });
     const spec = await (await fetch(base + '/openapi.json')).json();
